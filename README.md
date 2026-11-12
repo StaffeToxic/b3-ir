@@ -25,7 +25,8 @@ de vendas de ações e dados para a declaração anual (DIRPF).
 | Separação de day trade e operações comuns | ✅ pronto |
 | Apuração mensal: ações, FIIs, ETFs, isenção, prejuízo, IRRF, DARF mínimo | ✅ pronto |
 | Regras conferidas nos textos oficiais, versionados em [`legislacao/`](legislacao/) | ✅ 9 de 10 |
-| Leitura de notas de corretagem em PDF (padrão SINACOR) | planejado |
+| Leitura de notas de corretagem em PDF (padrão SINACOR, via [correpy](https://github.com/thiagosalvatore/correpy)) | ✅ pronto (extra opcional) |
+| Nome de pregão → ticker e classe (FII/ETF/ação) a partir do COTAHIST da B3 | ✅ pronto |
 | Importação dos extratos da Área do Investidor da B3 | planejado |
 | Dados para a declaração anual (bens e direitos, renda variável) | planejado |
 
@@ -52,12 +53,26 @@ cd b3-ir
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
+pip install -e ".[pdf]"          # opcional: leitura de notas em PDF
 ```
+
+> **Sobre o extra `pdf`:** a leitura de notas usa o correpy, que depende do
+> PyMuPDF, licenciado como **AGPL-3.0**. Por isso ele é opcional: o b3-ir em si
+> continua MIT, e só quem instala `b3-ir[pdf]` passa a usar código AGPL.
 
 ## Uso
 
-Por enquanto a entrada é um CSV simples (a leitura de notas em PDF e dos extratos
-da B3 vem a seguir). Veja [`examples/operacoes.csv`](examples/operacoes.csv):
+As entradas podem ser notas de corretagem em PDF (com o extra `pdf`) ou um CSV
+simples. Para as notas, **use uma pasta por corretora**: o nome da pasta identifica
+a corretora, e day trade só existe dentro da mesma corretora.
+
+```text
+notas/
+├── xp/        nota-2026-03-02.pdf ...
+└── clear/     nota-2026-03-05.pdf ...
+```
+
+O CSV manual está em [`examples/operacoes.csv`](examples/operacoes.csv):
 
 ```text
 data;tipo;ticker;quantidade;preco;custos;irrf
@@ -92,7 +107,9 @@ ainda `UNVERIFIED`. O contrato completo está em
 ```text
 src/b3_ir/
 ├── domain/      núcleo puro, sem I/O: modelos, classificação, preço médio, apuração
-├── parsers/     entradas (CSV manual; PDF SINACOR e XLSX da B3 a seguir)
+├── parsers/     entradas: CSV manual e notas SINACOR em PDF (XLSX da B3 a seguir)
+├── data/        tabela de ativos gerada do COTAHIST da B3
+├── catalog.py   nome de pregão → ticker → classe
 ├── report/      saídas em texto e JSON
 ├── rules.py     registro único de regras fiscais com fonte legal
 └── cli.py       comando b3-ir

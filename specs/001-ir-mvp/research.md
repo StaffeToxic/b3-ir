@@ -1,6 +1,6 @@
 # Research — b3-ir MVP
 
-Status: **R1, R2, R3 and R6 decided (2026-11-11); R4 and R5 open.** Each front below is dispatched to one Maestri agent, which
+Status: **R1, R2, R3, R4 (PDF notes) and R6 decided (2026-11-11); R4 (B3 XLSX) and R5 open.** Each front below is dispatched to one Maestri agent, which
 writes `research/<front>.md`. Claude reads the reports, decides, and records
 each decision here as Decision / Rationale / Alternatives. Until a decision is
 recorded, every value in the front is `UNVERIFIED` and must not be implemented
@@ -129,3 +129,32 @@ with the test cases worth porting.
   with every rule traceable to versioned legal texts; it does not try to be a
   desktop app. For R4, evaluate depending on `correpy` for SINACOR parsing
   (license-compatible) before writing a parser from scratch.
+
+### D-R4-1 — SINACOR notes via correpy, as an optional extra
+
+- **Decision**: read PDF notes with `correpy` (Apache-2.0) behind the `b3-ir[pdf]`
+  extra, imported lazily. b3-ir takes trades, fees and the note's IRRF line;
+  correpy's per-trade IRRF estimate (computed from a float) is ignored, fees are
+  allocated by value (IN 1.585 art. 56 par. 4) and the note IRRF by sale value.
+  A note with any out-of-scope item is refused whole, since its fees cover all items.
+  The PDF's parent folder name is the broker (correpy does not expose it).
+- **Rationale**: correpy depends on PyMuPDF (AGPL-3.0 or commercial). A hard
+  dependency would pass AGPL obligations to every b3-ir user; as an extra, the core
+  stays MIT-only and users opt in. CI runs without it (tests use fakes).
+- **Evidence**: on correpy's sample note (2022, 17 trades) fees 9.50 allocate
+  exactly and the note IRRF 0.79 equals 0.005% of the R$ 15,801.54 sold.
+- **Alternatives**: own parser on pdfplumber (MIT; more work, no layout corpus);
+  hard dependency on correpy (rejected: AGPL leak).
+
+### D-R4-2 — Bundled asset catalog from COTAHIST
+
+- **Decision**: `src/b3_ir/data/ativos.csv` built from B3 COTAHIST 2022-2026
+  (`scripts/atualizar_ativos.py`): every (ticker, class, trading name,
+  specification). BDI 02/07/08 = stock, 12 = FII, 14 = ETF; BDRs (BDI 34-36 or
+  DR* specification), rights, Fiagro and fractional lots are excluded, so they are
+  refused downstream. Event marks (EJ, ED, ATZ, CI...) are stripped on both sides.
+- **Rationale**: real notes print "BBSEGURIDADE ON NM", not BBSE3; correpy's regex
+  finds no ticker in 17 of 17 trades of its own sample. The catalog resolves all 17.
+  It also replaces the *11 heuristic (FII vs ETF vs unit) for known tickers.
+- **Limits**: names not quoted since 2022 or shared by several tickers (e.g.
+  "FII KINEA") are refused, never guessed; rerun the script with more years.

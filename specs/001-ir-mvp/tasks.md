@@ -44,7 +44,7 @@ by two tickets at once; risk `high` = tax correctness.
 
 | ID | Ticket | blockedBy | conflictKeys | Risk |
 |---|---|---|---|---|
-| T020 | `parsers/sinacor.py` against fixtures | T002, T005 | src/b3_ir/parsers/sinacor.py | medium |
+| T020 | `parsers/sinacor.py` via correpy extra + COTAHIST catalog (D-R4-1/2) — DONE | T002, T005 | src/b3_ir/parsers/sinacor.py | medium |
 | T021 | `parsers/b3_statements.py` against fixtures | T002, T005 | src/b3_ir/parsers/b3_statements.py | medium |
 | T022 | `parsers/dedup.py` | T020, T021 | src/b3_ir/parsers/dedup.py | medium |
 | T023 | `report/` text, JSON, CSV per `contracts/cli.md` | T013, T014 | src/b3_ir/report/ | low |

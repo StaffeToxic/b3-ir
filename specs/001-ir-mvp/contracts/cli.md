@@ -13,7 +13,10 @@ b3-ir --version
 ```
 
 `ENTRADAS` are files or folders (recursive). `.csv` → manual operations CSV
-(FR-015); `.pdf` → SINACOR parser; `.xlsx` → B3 statement parser (type detected
+(FR-015); `.pdf` → SINACOR notes via the optional `b3-ir[pdf]` extra (correpy,
+research D-R4-1). The PDF's parent folder name is taken as the broker, so keep one
+folder per broker for correct day-trade pairing. A file that cannot be read is
+listed as unsupported and the others keep processing; `.xlsx` → B3 statement parser (type detected
 from header row). Other extensions are listed as ignored. Until a parser exists,
 its files are listed as unsupported and the exit code is 3.
 

@@ -68,10 +68,13 @@ def test_text_report_mentions_darf(capsys: pytest.CaptureFixture[str]) -> None:
 def test_pending_parsers_exit_incomplete(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    (tmp_path / "nota.pdf").write_bytes(b"%PDF-1.4")
+    (tmp_path / "extrato.xlsx").write_bytes(b"PK")
+    (tmp_path / "quebrada.pdf").write_bytes(b"nao e pdf")
     code = main(["--sem-aviso", "posicoes", str(tmp_path)])
     assert code == EXIT_INCOMPLETE
-    assert "ainda não implementada" in capsys.readouterr().err
+    err = capsys.readouterr().err
+    assert "ainda não implementada" in err
+    assert "quebrada.pdf" in err
 
 
 def test_missing_input_is_an_error(capsys: pytest.CaptureFixture[str]) -> None:

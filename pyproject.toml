@@ -26,11 +26,12 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "pdfplumber>=0.11",
     "openpyxl>=3.1",
 ]
 
 [project.optional-dependencies]
+# correpy reads SINACOR notes; it depends on PyMuPDF (AGPL-3.0), hence opt-in.
+pdf = ["correpy>=0.6,<0.7"]
 dev = [
     "pytest>=8",
     "pytest-cov>=5",

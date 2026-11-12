@@ -10,12 +10,14 @@ from datetime import date
 from pathlib import Path
 
 from b3_ir import __version__, rules
+from b3_ir.catalog import load_catalog
 from b3_ir.domain.assessment import assess_year
 from b3_ir.domain.classify import classify
 from b3_ir.domain.models import CorporateEvent, MonthlyAssessment, Operation
 from b3_ir.domain.positions import PositionLedger, build_positions
-from b3_ir.errors import B3IRError
+from b3_ir.errors import B3IRError, ParseError
 from b3_ir.parsers.csv_ops import parse_operations_csv
+from b3_ir.parsers.sinacor import parse_sinacor
 from b3_ir.report import json_out, text
 
 DISCLAIMER = (
@@ -28,7 +30,7 @@ EXIT_ERROR = 1
 EXIT_USAGE = 2
 EXIT_INCOMPLETE = 3
 
-PENDING_PARSERS = {".pdf": "notas SINACOR", ".xlsx": "extratos da B3"}
+PENDING_PARSERS = {".xlsx": "extratos da B3"}
 
 
 @dataclass
@@ -57,11 +59,23 @@ def load_inputs(entries: Sequence[str]) -> Inputs:
     inputs = Inputs()
     for path in _files(entries):
         suffix = path.suffix.lower()
-        if suffix == ".csv":
-            parsed = parse_operations_csv(path)
-            inputs.operations.extend(parsed.operations)
-            inputs.events.extend(parsed.events)
-        elif suffix in PENDING_PARSERS:
+        try:
+            if suffix == ".csv":
+                parsed = parse_operations_csv(path)
+                inputs.operations.extend(parsed.operations)
+                inputs.events.extend(parsed.events)
+                continue
+            if suffix == ".pdf":
+                # Notes carry no broker id in correpy; the folder name stands for it.
+                notes = parse_sinacor(path, broker=path.parent.name)
+                inputs.operations.extend(notes.operations)
+                inputs.unsupported.extend(notes.unsupported)
+                continue
+        except ParseError as exc:
+            # One bad file must not hide the others (spec, edge cases).
+            inputs.unsupported.append(str(exc))
+            continue
+        if suffix in PENDING_PARSERS:
             inputs.unsupported.append(
                 f"{path.name}: leitura de {PENDING_PARSERS[suffix]} ainda não implementada"
             )
@@ -71,7 +85,7 @@ def load_inputs(entries: Sequence[str]) -> Inputs:
 
 
 def _ledger(inputs: Inputs, until: date | None = None) -> PositionLedger:
-    classified, warnings = classify(inputs.operations)
+    classified, warnings = classify(inputs.operations, load_catalog().asset_classes)
     inputs.warnings.extend(warnings)
     return build_positions(classified, inputs.events, until)
 
