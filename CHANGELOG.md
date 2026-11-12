@@ -18,6 +18,9 @@ versionamento [SemVer](https://semver.org/lang/pt-BR/).
 - Catálogo de ativos do COTAHIST da B3: resolve o nome de pregão da nota para o
   ticker e classifica FII, ETF e ação.
 
+- Extratos da Área do Investidor da B3 (Negociação e Movimentação) e deduplicação
+  entre notas e extrato.
+
 ### Corrigido
 - Day trade agora exige a mesma corretora (Lei 9.959/2000, art. 8º).
 - Saldo de IRRF não passa de um ano para o outro.

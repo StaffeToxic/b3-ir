@@ -1,6 +1,6 @@
 # Research — b3-ir MVP
 
-Status: **R1, R2, R3, R4 (PDF notes) and R6 decided (2026-11-11); R4 (B3 XLSX) and R5 open.** Each front below is dispatched to one Maestri agent, which
+Status: **R1, R2, R3, R4 and R6 decided (2026-11-11); R5 open.** Each front below is dispatched to one Maestri agent, which
 writes `research/<front>.md`. Claude reads the reports, decides, and records
 each decision here as Decision / Rationale / Alternatives. Until a decision is
 recorded, every value in the front is `UNVERIFIED` and must not be implemented
@@ -158,3 +158,20 @@ with the test cases worth porting.
   It also replaces the *11 heuristic (FII vs ETF vs unit) for known tickers.
 - **Limits**: names not quoted since 2022 or shared by several tickers (e.g.
   "FII KINEA") are refused, never guessed; rerun the script with more years.
+
+### D-R4-3 — B3 statements: trades from Negociação, events and income from Movimentação
+
+- **Decision**: `parsers/b3_statements.py` detects the statement by its header.
+  Negociação gives operations (trade date, broker = "Instituição", zero costs plus a
+  warning). Movimentação gives splits, reverse splits, bonus shares and income
+  (dividends, JCP, FII income); "Transferência - Liquidação" rows are ignored and
+  any other label is listed as unsupported. Trades in both a note/CSV and the
+  statement are deduplicated by (date, ticker, side, quantity, price), counting
+  repeats; the note copy wins because it has costs and IRRF.
+- **Rationale**: Movimentação lists trades by settlement date (D+2), which would
+  move trades across months and break day-trade pairing. Bonus shares without the
+  cost per share in the statement are refused (IN 1.585 art. 58 par. 1 needs it).
+- **UNVERIFIED**: the Negociação column names come from memory of the export, not
+  from an official layout; Movimentação labels come from MonnaIA's catalog of real
+  exports. Header matching is alias-based and accent-insensitive; both need a test
+  against a real export before release.

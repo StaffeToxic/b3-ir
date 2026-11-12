@@ -27,7 +27,8 @@ de vendas de ações e dados para a declaração anual (DIRPF).
 | Regras conferidas nos textos oficiais, versionados em [`legislacao/`](legislacao/) | ✅ 9 de 10 |
 | Leitura de notas de corretagem em PDF (padrão SINACOR, via [correpy](https://github.com/thiagosalvatore/correpy)) | ✅ pronto (extra opcional) |
 | Nome de pregão → ticker e classe (FII/ETF/ação) a partir do COTAHIST da B3 | ✅ pronto |
-| Importação dos extratos da Área do Investidor da B3 | planejado |
+| Extratos da Área do Investidor da B3 (Negociação e Movimentação, XLSX) | ✅ pronto (formato a validar com export real) |
+| Deduplicação entre notas e extrato | ✅ pronto |
 | Dados para a declaração anual (bens e direitos, renda variável) | planejado |
 
 **Fora do escopo do MVP:** opções, futuros, BDRs, renda fixa, criptoativos,
@@ -62,8 +63,12 @@ pip install -e ".[pdf]"          # opcional: leitura de notas em PDF
 
 ## Uso
 
-As entradas podem ser notas de corretagem em PDF (com o extra `pdf`) ou um CSV
-simples. Para as notas, **use uma pasta por corretora**: o nome da pasta identifica
+As entradas podem ser notas de corretagem em PDF (com o extra `pdf`), os extratos
+da Área do Investidor da B3 em XLSX ou um CSV simples, todos juntos:
+
+- **Negociação** (XLSX): operações, quando você não tem todas as notas. Não traz
+  custos; se a nota da mesma operação existir, a nota prevalece.
+- **Movimentação** (XLSX): desdobramentos, grupamentos, bonificações e proventos. Para as notas, **use uma pasta por corretora**: o nome da pasta identifica
 a corretora, e day trade só existe dentro da mesma corretora.
 
 ```text
@@ -107,7 +112,7 @@ ainda `UNVERIFIED`. O contrato completo está em
 ```text
 src/b3_ir/
 ├── domain/      núcleo puro, sem I/O: modelos, classificação, preço médio, apuração
-├── parsers/     entradas: CSV manual e notas SINACOR em PDF (XLSX da B3 a seguir)
+├── parsers/     entradas: CSV manual, notas SINACOR (PDF), extratos da B3 (XLSX), deduplicação
 ├── data/        tabela de ativos gerada do COTAHIST da B3
 ├── catalog.py   nome de pregão → ticker → classe
 ├── report/      saídas em texto e JSON

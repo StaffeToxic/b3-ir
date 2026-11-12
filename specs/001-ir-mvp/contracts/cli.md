@@ -16,8 +16,9 @@ b3-ir --version
 (FR-015); `.pdf` → SINACOR notes via the optional `b3-ir[pdf]` extra (correpy,
 research D-R4-1). The PDF's parent folder name is taken as the broker, so keep one
 folder per broker for correct day-trade pairing. A file that cannot be read is
-listed as unsupported and the others keep processing; `.xlsx` → B3 statement parser (type detected
-from header row). Other extensions are listed as ignored. Until a parser exists,
+listed as unsupported and the others keep processing; `.xlsx` → B3 statement parser (Negociação or
+Movimentação, detected from the header row; research D-R4-3). Statement trades
+already present in a note or CSV are dropped and reported. Other extensions are listed as ignored. Until a parser exists,
 its files are listed as unsupported and the exit code is 3.
 
 ## Manual CSV (FR-015)

@@ -65,7 +65,7 @@ def test_text_report_mentions_darf(capsys: pytest.CaptureFixture[str]) -> None:
     assert "vence 30/06/2026" in out
 
 
-def test_pending_parsers_exit_incomplete(
+def test_unreadable_files_exit_incomplete(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     (tmp_path / "extrato.xlsx").write_bytes(b"PK")
@@ -73,10 +73,36 @@ def test_pending_parsers_exit_incomplete(
     code = main(["--sem-aviso", "posicoes", str(tmp_path)])
     assert code == EXIT_INCOMPLETE
     err = capsys.readouterr().err
-    assert "ainda não implementada" in err
+    assert "extrato.xlsx" in err
     assert "quebrada.pdf" in err
 
 
 def test_missing_input_is_an_error(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["--sem-aviso", "posicoes", "nao-existe.csv"]) == 1
     assert "não encontrada" in capsys.readouterr().err
+
+
+def test_statement_trades_are_deduplicated_against_notes(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from openpyxl import Workbook
+
+    (tmp_path / "operacoes.csv").write_text(EXAMPLE.read_text(encoding="utf-8"), encoding="utf-8")
+    workbook = Workbook()
+    sheet = workbook.active
+    assert sheet is not None
+    sheet.append(
+        ["Data do Negócio", "Tipo de Movimentação", "Mercado", "Instituição",
+         "Código de Negociação", "Quantidade", "Preço"]
+    )  # fmt: skip
+    # Same trade as the CSV's first line (dropped) and a new one (kept, zero costs).
+    sheet.append(["05/01/2026", "Compra", "Mercado à Vista", "XP", "ITSA4", 1000, "10,00"])
+    sheet.append(["07/01/2026", "Compra", "Mercado à Vista", "XP", "WEGE3", 10, "40,00"])
+    workbook.save(tmp_path / "negociacao.xlsx")
+
+    code, report = run_json(capsys, "posicoes", str(tmp_path), "--data", "2026-01-31")
+    positions = {p["ticker"]: p for p in report["posicoes"]}
+    assert Decimal(positions["ITSA4"]["quantity"]) == Decimal("1000")
+    assert Decimal(positions["WEGE3"]["total_cost"]) == Decimal("400")
+    assert any("já estavam nas notas" in w for w in report["avisos"])
+    assert code == EXIT_OK
