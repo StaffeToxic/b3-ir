@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import date
 from decimal import Decimal
 
@@ -50,6 +51,14 @@ def test_same_day_buy_and_sell_is_day_trade() -> None:
         (Side.BUY, TradeType.SWING, Decimal("200"), Decimal("2.00")),
         (Side.SELL, TradeType.DAY, Decimal("100"), Decimal("1.00")),
     ]
+
+
+def test_day_trade_requires_the_same_broker() -> None:
+    # Lei 9.959/2000, art. 8, par. 1, I, a: same day, same asset, same intermediary.
+    buy = replace(op(D, "PETR4", Side.BUY, "100", "10"), broker="Corretora A")
+    sell = replace(op(D, "PETR4", Side.SELL, "100", "11"), broker="Corretora B")
+    ops, _ = classify([buy, sell])
+    assert {o.trade_type for o in ops} == {TradeType.SWING}
 
 
 def test_different_days_are_swing() -> None:

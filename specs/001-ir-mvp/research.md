@@ -1,6 +1,6 @@
 # Research — b3-ir MVP
 
-Status: **OPEN**. Each front below is dispatched to one Maestri agent, which
+Status: **R1, R2, R3 and R6 decided (2026-11-11); R4 and R5 open.** Each front below is dispatched to one Maestri agent, which
 writes `research/<front>.md`. Claude reads the reports, decides, and records
 each decision here as Decision / Rationale / Alternatives. Until a decision is
 recorded, every value in the front is `UNVERIFIED` and must not be implemented
@@ -71,3 +71,61 @@ with the test cases worth porting.
 - **Decision**: a sale larger than the position raises `UnsupportedOperationError`.
 - **Rationale**: Constitution VI; MonnaIA clamps to zero, which hides missing data.
 - **Alternatives**: clamp (rejected), allow short positions (out of MVP scope).
+
+### D-R1-1 — Rates, limits and codes confirmed in official texts
+
+- **Decision**: mark as verified in `rules.py`: 15% common (Lei 11.033 art. 2 II),
+  20% day trade (art. 2 I), 20% FII (Lei 8.668 art. 18), R$ 20,000 stock-sale
+  exemption (Lei 11.033 art. 3 I; IN 1.585 art. 59), IRRF 0.005% (Lei 11.033 art. 2
+  par. 1 IV) and 1% day trade (Lei 9.959 art. 8), R$ 10 minimum DARF (Lei 9.430
+  art. 68), code 6015 (RFB Agenda Tributaria), due on the last business day of the
+  next month (IN 1.585 art. 56 par. 5). Texts versioned in `legislacao/`.
+- **Rationale**: Constitution I. Downloaded from Planalto and the RFB normative API;
+  SHA-256 in each file's front matter.
+- **Alternatives**: secondary sources (blogs, broker FAQs) rejected as sole source.
+
+### D-R1-2 — Day trade is per broker
+
+- **Decision**: `Operation.broker` added; day trade pairs only same day, same
+  ticker, same broker, in trade order (Lei 9.959 art. 8 par. 1 I a, wording of Lei
+  12.350/2010; IN 1.585 art. 65 pars. 1-3). Manual CSV gets an optional `corretora`
+  column; without it, all operations of the day are treated as one broker.
+- **Rationale**: grouping only by day and ticker misclassified trades at two brokers.
+
+### D-R1-3 — IRRF balance closes at year end
+
+- **Decision**: unused IRRF carries across months but not across years; the leftover
+  is reported on the last month of the year.
+- **Rationale**: 0.005% balance goes to the annual return (Lei 11.033 art. 2 par. 7
+  III); day-trade balance only by refund request (IN 1.585 art. 65 par. 9).
+
+### D-R1-4 — Exemption sum uses swing stock sales only
+
+- **Decision**: the R$ 20,000 test sums stock sales in common operations.
+- **Rationale**: IN 1.585 art. 59 par. 2 I excludes day trade from the exemption;
+  the text does not say whether day-trade sales count toward the sum, so this is
+  documented as an interpretation in `docs/regras-fiscais.md`, not hidden.
+
+### D-R1-5 — 2025-2026 changes
+
+- **Decision**: no change to the monthly rules. MP 1.303/2025 shows "Vigencia
+  encerrada" in every compiled text. Lei 15.270/2025 (10% withholding on dividends
+  above R$ 50,000 per month from the same company, from 2026) goes to R5 (annual report).
+
+### D-R1-6 — Rounding stays UNVERIFIED but only flags when it matters
+
+- **Decision**: no official source found for the rounding mode of the DARF amount;
+  the month is flagged only when rounding actually changes the value.
+
+### D-R6-3 — Prior art: COIR and correpy
+
+- **Findings** (GitHub search, 2026-11-11):
+  - `MarceloPCF/COIR` (AGPL-3.0, active): Windows desktop app that already does
+    SINACOR notes, B3 statements, options, futures, DARF with penalties and DIRPF.
+  - `thiagosalvatore/correpy` (Apache-2.0, PyPI, last push 2024-08): SINACOR PDF
+    parser library, no tax logic.
+  - Others are small or stale (<20 stars).
+- **Decision**: b3-ir positions itself as a **library + cross-platform CLI** under MIT,
+  with every rule traceable to versioned legal texts; it does not try to be a
+  desktop app. For R4, evaluate depending on `correpy` for SINACOR parsing
+  (license-compatible) before writing a parser from scratch.

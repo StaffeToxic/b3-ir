@@ -33,7 +33,8 @@ data;tipo;ticker;quantidade;preco;custos;irrf
 - `tipo`: `compra`, `venda`, `desdobramento`, `grupamento`, `bonificacao`.
   For `grupamento`, `quantidade` is the number of shares removed (positive).
   For `bonificacao`, `preco` is the cost attributed per bonus share.
-- `custos` and `irrf` are optional (default 0). Settlement date = trade date + 2
+- `custos`, `irrf` and `corretora` are optional (default 0 / empty). Day trade
+  pairs only operations with the same `corretora` (research D-R1-2). Settlement date = trade date + 2
   calendar days (only informative in the MVP).
 
 ## Exit codes

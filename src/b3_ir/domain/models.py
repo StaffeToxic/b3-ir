@@ -62,7 +62,11 @@ def _require_non_negative(name: str, value: Decimal) -> None:
 
 @dataclass(frozen=True, slots=True)
 class Operation:
-    """A buy or sale. Parsers leave asset_class/trade_type as None; classify() fills them."""
+    """A buy or sale. Parsers leave asset_class/trade_type as None; classify() fills them.
+
+    ``broker`` identifies the intermediary institution: day trade only pairs
+    operations at the same broker (Lei 9.959/2000, art. 8º, § 1º, I, a).
+    """
 
     trade_date: date
     settlement_date: date
@@ -75,6 +79,7 @@ class Operation:
     source: str
     asset_class: AssetClass | None = None
     trade_type: TradeType | None = None
+    broker: str | None = None
 
     def __post_init__(self) -> None:
         if not self.ticker or self.ticker != self.ticker.strip().upper():

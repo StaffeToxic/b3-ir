@@ -89,6 +89,7 @@ def _parse_row(row: dict[str, str], source: str, result: CsvParseResult) -> None
                 costs=_number(row.get("custos"), ZERO),
                 irrf=_number(row.get("irrf"), ZERO),
                 source=source,
+                broker=row.get("corretora") or None,
             )
         )
     elif kind in _EVENTS:

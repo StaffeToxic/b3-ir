@@ -19,7 +19,7 @@ class Category(StrEnum): STOCK_SWING = "acoes_comum"; STOCK_DAY = "acoes_day_tra
 ```python
 Operation(trade_date, settlement_date, ticker, side, quantity, unit_price,
           costs, irrf, source, asset_class: AssetClass | None = None,
-          trade_type: TradeType | None = None)
+          trade_type: TradeType | None = None, broker: str | None = None)
 # Parsers leave asset_class and trade_type as None; classify() fills both.
 # Domain functions after classify() raise if either is still None.
 CorporateEvent(date, ticker, kind, quantity_delta: Decimal, bonus_unit_cost: Decimal | None, source)

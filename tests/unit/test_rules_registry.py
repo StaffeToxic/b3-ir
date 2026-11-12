@@ -42,10 +42,10 @@ def test_versions_do_not_overlap() -> None:
             assert earlier.valid_to < later.valid_from
 
 
-def test_get_flags_unverified() -> None:
+def test_get_reports_verification_status() -> None:
     value, unverified = rules.decimal_rule("stock_swing_rate", date(2026, 5, 1))
-    assert value == Decimal("0.15")
-    assert unverified is True
+    assert (value, unverified) == (Decimal("0.15"), False)
+    assert rules.get("money_rounding", date(2026, 5, 1)).unverified is True
 
 
 def test_get_refuses_dates_without_rule() -> None:

@@ -113,12 +113,12 @@ def _apply_swing(ledger: PositionLedger, op: Operation) -> None:
 
 
 def _day_trade_results(operations: Sequence[Operation]) -> list[RealizedResult]:
-    groups: dict[tuple[date, str], list[Operation]] = defaultdict(list)
+    groups: dict[tuple[date, str, str], list[Operation]] = defaultdict(list)
     for op in operations:
         if op.trade_type is TradeType.DAY:
-            groups[(op.trade_date, op.ticker)].append(op)
+            groups[(op.trade_date, op.ticker, op.broker or "")].append(op)
     results: list[RealizedResult] = []
-    for (day, ticker), ops in sorted(groups.items()):
+    for (day, ticker, _broker), ops in sorted(groups.items()):
         sells = [op for op in ops if op.side is Side.SELL]
         buys = [op for op in ops if op.side is Side.BUY]
         sale_value = sum((op.gross_value for op in sells), ZERO)

@@ -29,7 +29,7 @@ def run_json(capsys: pytest.CaptureFixture[str], *args: str) -> tuple[int, dict]
 
 def test_monthly_report(capsys: pytest.CaptureFixture[str]) -> None:
     code, report = run_json(capsys, "mensal", str(EXAMPLE))
-    assert code == EXIT_INCOMPLETE  # rules still UNVERIFIED
+    assert code == EXIT_OK  # every rule used here is verified and no rounding happens
     months = {m["month"]: m for m in report["meses"]}
     assert list(months) == ["2026-02", "2026-03", "2026-05", "2026-06"]
     assert Decimal(months["2026-02"]["exempt"]) == Decimal("796")
@@ -45,6 +45,8 @@ def test_monthly_report(capsys: pytest.CaptureFixture[str]) -> None:
     assert Decimal(jun["exempt"]) == Decimal("2667")
     assert Decimal(jun["loss_balances"]["comum"]) == Decimal("3026")
     assert jun["darf"] is None
+    # June IRRF 0.42 + 0.65 is never used in 2026 and is reported, not carried.
+    assert "saldo de IRRF de R$ 1.07" in jun["warnings"][-1]
 
 
 def test_positions_report(capsys: pytest.CaptureFixture[str]) -> None:

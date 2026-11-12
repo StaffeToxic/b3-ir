@@ -1,7 +1,7 @@
 # R6 — Prior art and MonnaIA inventory
 
 Date: 2026-11-11. Source: private repo `StaffeToxic/MonnaIA` (TypeScript), read-only
-shallow clone. External open-source prior art: **UNVERIFIED** (not surveyed yet).
+shallow clone. External open-source prior art: see `research.md` D-R6-3.
 
 ## What MonnaIA has that is worth porting
 

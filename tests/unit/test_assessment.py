@@ -1,7 +1,8 @@
 """Monthly assessment with hand-computed values.
 
-Rates and limits used below are the current candidates in rules.py (15% common,
-20% day trade and FII, R$ 20,000 exemption, R$ 10 minimum DARF), still UNVERIFIED.
+Rates and limits come from rules.py, verified against the official texts in
+legislacao/: 15% common, 20% day trade and FII, R$ 20,000 exemption for stock
+sales, R$ 10 minimum DARF.
 """
 
 from datetime import date
@@ -127,9 +128,25 @@ def test_loss_in_exempt_month_still_counts() -> None:
     assert carry.loss(BUCKET_COMMON) == Decimal("300")
 
 
-def test_irrf_surplus_is_carried() -> None:
-    _, carry = by_month([res(date(2026, 2, 10), "-10", "30000", irrf="1.50")])
-    assert carry.irrf == Decimal("1.50")
+def test_irrf_surplus_is_used_in_later_months() -> None:
+    # Feb: loss, IRRF 1.50 unused. Mar: gain 1,000 with sales 30,000 -> 150.00 - 1.50 = 148.50
+    months, _ = by_month(
+        [
+            res(date(2026, 2, 10), "-10", "30000", irrf="1.50"),
+            res(date(2026, 3, 10), "1010", "30000"),
+        ]
+    )
+    mar = months["2026-03"]
+    assert mar.irrf_used == Decimal("1.50")
+    assert mar.darf is not None
+    assert mar.darf.amount == Decimal("148.50")
+
+
+def test_irrf_balance_does_not_cross_the_year() -> None:
+    # Lei 11.033, art. 2, par. 7, III: leftover goes to the annual return instead.
+    months, carry = by_month([res(date(2026, 2, 10), "-10", "30000", irrf="1.50")])
+    assert carry.irrf == 0
+    assert "saldo de IRRF de R$ 1.50" in months["2026-02"].warnings[-1]
 
 
 def test_opening_state_from_previous_year() -> None:
@@ -146,9 +163,18 @@ def test_opening_state_from_previous_year() -> None:
     assert assessments[0].tax_due == 0
 
 
-def test_every_month_is_flagged_unverified_while_rules_are_candidates() -> None:
+def test_exact_month_is_not_flagged() -> None:
     months, _ = by_month([res(date(2026, 3, 10), "5000", "30000")])
-    assert months["2026-03"].warnings[0].startswith("UNVERIFIED")
+    assert not any(w.startswith("UNVERIFIED") for w in months["2026-03"].warnings)
+
+
+def test_month_is_flagged_only_when_unverified_rounding_changes_the_amount() -> None:
+    # 100.03 * 15% = 15.0045 -> rounded to 15.00 with the unverified rounding rule.
+    months, _ = by_month([res(date(2026, 3, 10), "100.03", "30000")])
+    mar = months["2026-03"]
+    assert mar.darf is not None
+    assert mar.darf.amount == Decimal("15.00")
+    assert mar.warnings[0] == "UNVERIFIED: regras não confirmadas: money_rounding"
 
 
 @pytest.mark.parametrize(

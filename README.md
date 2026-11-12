@@ -23,7 +23,8 @@ de vendas de ações e dados para a declaração anual (DIRPF).
 | Entrada manual em CSV | ✅ pronto |
 | Preço médio com custos, desdobramento, grupamento e bonificação | ✅ pronto |
 | Separação de day trade e operações comuns | ✅ pronto |
-| Apuração mensal: ações, FIIs, ETFs, isenção, prejuízo, IRRF, DARF mínimo | ✅ pronto (regras `UNVERIFIED`) |
+| Apuração mensal: ações, FIIs, ETFs, isenção, prejuízo, IRRF, DARF mínimo | ✅ pronto |
+| Regras conferidas nos textos oficiais, versionados em [`legislacao/`](legislacao/) | ✅ 9 de 10 |
 | Leitura de notas de corretagem em PDF (padrão SINACOR) | planejado |
 | Importação dos extratos da Área do Investidor da B3 | planejado |
 | Dados para a declaração anual (bens e direitos, renda variável) | planejado |
@@ -34,7 +35,9 @@ ativos no exterior, aluguel de ações e venda a descoberto. Esses itens são
 
 ## Princípios
 
-- **Toda regra fiscal tem fonte legal citada** em [`docs/regras-fiscais.md`](docs/regras-fiscais.md).
+- **Toda regra fiscal tem fonte legal citada** em [`docs/regras-fiscais.md`](docs/regras-fiscais.md),
+  e o texto da lei está versionado em [`legislacao/`](legislacao/) (Planalto e Receita
+  Federal, com SHA-256 da fonte). Um teste falha se uma lei citada não estiver lá.
   Regra não confirmada aparece como `UNVERIFIED` no relatório.
 - **Valores exatos**: dinheiro em `Decimal`, nunca ponto flutuante.
 - **Privacidade**: tudo roda localmente, sem acesso à internet e sem telemetria.
@@ -97,6 +100,17 @@ src/b3_ir/
 
 Testes de arquitetura garantem que o domínio não faz I/O, não acessa a rede e não
 usa `float`.
+
+## Projetos parecidos
+
+- [COIR](https://github.com/MarceloPCF/COIR): aplicativo para Windows, mais completo
+  (opções, futuros, multa e juros do DARF). Licença AGPL-3.0.
+- [correpy](https://github.com/thiagosalvatore/correpy): biblioteca Python que lê
+  notas SINACOR, sem cálculo de imposto. Licença Apache-2.0.
+
+O b3-ir é uma **biblioteca + CLI multiplataforma** com licença MIT, para quem quer
+integrar o cálculo em scripts, planilhas ou outros sistemas, com cada regra
+rastreável até o texto da lei.
 
 ## Desenvolvimento
 

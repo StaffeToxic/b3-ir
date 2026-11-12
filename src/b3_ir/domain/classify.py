@@ -77,7 +77,7 @@ def _split_day(ops: list[Operation]) -> list[Operation]:
     """Split one ticker's operations of one day into day-trade and swing slices.
 
     The matched quantity is min(bought, sold); it is taken from buys and sells in
-    the order they appear, the rest is swing trade (research R1).
+    the order they appear (IN RFB 1.585/2015, art. 65, § 3º); the rest is swing trade.
     """
     bought = sum((op.quantity for op in ops if op.side is Side.BUY), ZERO)
     sold = sum((op.quantity for op in ops if op.side is Side.SELL), ZERO)
@@ -96,19 +96,19 @@ def classify(
 ) -> tuple[list[Operation], list[str]]:
     """Fill asset_class and trade_type.
 
-    Returns the operations grouped by (day, ticker) in order of first appearance,
+    Returns the operations grouped by (day, ticker, broker) in order of first appearance,
     with day-trade and swing slices split, plus classification warnings.
     """
     warnings: list[str] = []
     seen_warnings: set[str] = set()
-    groups: dict[tuple[date, str], list[Operation]] = defaultdict(list)
-    order: list[tuple[date, str]] = []
+    groups: dict[tuple[date, str, str | None], list[Operation]] = defaultdict(list)
+    order: list[tuple[date, str, str | None]] = []
     for op in operations:
         asset_class, warning = asset_class_of(op.ticker, overrides)
         if warning and warning not in seen_warnings:
             seen_warnings.add(warning)
             warnings.append(warning)
-        key = (op.trade_date, op.ticker)
+        key = (op.trade_date, op.ticker, op.broker)
         if key not in groups:
             order.append(key)
         groups[key].append(replace(op, asset_class=asset_class))

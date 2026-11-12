@@ -75,15 +75,15 @@ class _Rules:
 
     def number(self, rule_id: str) -> Decimal:
         value, unverified = rules.decimal_rule(rule_id, self.on)
-        self._track(rule_id, unverified)
+        self.track(rule_id, unverified)
         return value
 
     def text(self, rule_id: str) -> str:
         resolved = rules.get(rule_id, self.on)
-        self._track(rule_id, resolved.unverified)
+        self.track(rule_id, resolved.unverified)
         return str(resolved.value)
 
-    def _track(self, rule_id: str, unverified: bool) -> None:
+    def track(self, rule_id: str, unverified: bool) -> None:
         if unverified and rule_id not in self.unverified:
             self.unverified.append(rule_id)
 
@@ -131,8 +131,11 @@ def assess_month(
     irrf_available = irrf + carry.irrf
     irrf_used = min(tax, irrf_available)
     tax_due = tax - irrf_used
-    rounding = r.text("money_rounding")
-    payable = quantize_cents(tax_due + carry.tax_below_minimum, rounding)
+    exact = tax_due + carry.tax_below_minimum
+    rounding = rules.get("money_rounding", month_start)
+    payable = quantize_cents(exact, str(rounding.value))
+    if payable != exact:
+        r.track("money_rounding", rounding.unverified)
 
     warnings = [
         "vencimento do DARF não considera feriados nacionais",
@@ -191,4 +194,16 @@ def assess_year(
             continue
         assessment, carry = assess_month(year, month, by_month.get(month, []), carry)
         assessments.append(assessment)
+    if carry.irrf > ZERO:
+        # Withheld tax does not carry into next year's monthly assessment: the 0.005%
+        # balance goes to the annual return (Lei 11.033/2004, art. 2º, § 7º, III) and the
+        # day-trade balance to a refund request (IN RFB 1.585/2015, art. 65, § 9º).
+        note = (
+            f"saldo de IRRF de R$ {quantize_cents(carry.irrf, 'half_up')} não compensado "
+            f"em {year}: declaração de ajuste (0,005%) ou pedido de restituição (day trade)"
+        )
+        if assessments:
+            last = assessments[-1]
+            assessments[-1] = replace(last, warnings=(*last.warnings, note))
+        carry = replace(carry, irrf=ZERO)
     return assessments, carry
