@@ -1,6 +1,7 @@
 """Constitution II, IV and V checked statically over the source tree."""
 
 import ast
+import re
 from pathlib import Path
 
 import pytest
@@ -27,9 +28,29 @@ def py_files(root: Path) -> list[Path]:
     return sorted(root.rglob("*.py"))
 
 
+WEB = SRC / "web"
+
+
 @pytest.mark.parametrize("path", py_files(SRC), ids=lambda p: p.name)
 def test_no_network_imports(path: Path) -> None:
-    assert not imported_roots(path) & NETWORK_MODULES
+    # The local web UI may serve on loopback (http.server) but never call out.
+    allowed = {"http", "socket", "urllib"} if WEB in path.parents else set()
+    assert not imported_roots(path) & (NETWORK_MODULES - allowed)
+
+
+@pytest.mark.parametrize("path", py_files(WEB), ids=lambda p: p.name)
+def test_web_ui_makes_no_outbound_requests(path: Path) -> None:
+    text = path.read_text(encoding="utf-8")
+    for forbidden in ("urlopen", "http.client", "HTTPConnection", "requests", "httpx"):
+        assert forbidden not in text
+
+
+def test_web_page_loads_nothing_from_outside() -> None:
+    page = (WEB / "static" / "index.html").read_text(encoding="utf-8")
+    # SVG namespace strings (xmlns) are identifiers, not requests; anything else is.
+    external = re.findall(r"(?:src|href|url\()\s*=?\s*[\"']?(https?:)?//", page)
+    assert external == []
+    assert "@import" not in page
 
 
 @pytest.mark.parametrize("path", py_files(DOMAIN), ids=lambda p: p.name)

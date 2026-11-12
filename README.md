@@ -20,6 +20,7 @@ de vendas de ações e dados para a declaração anual (DIRPF).
 
 | Recurso | Status |
 |---|---|
+| Interface no navegador (`b3-ir web`), 100% local | ✅ pronto |
 | Entrada manual em CSV | ✅ pronto |
 | Preço médio com custos, desdobramento, grupamento e bonificação | ✅ pronto |
 | Separação de day trade e operações comuns | ✅ pronto |
@@ -62,6 +63,19 @@ pip install -e ".[pdf]"          # opcional: leitura de notas em PDF
 > continua MIT, e só quem instala `b3-ir[pdf]` passa a usar código AGPL.
 
 ## Uso
+
+### Interface no navegador
+
+```bash
+b3-ir web
+```
+
+Abre uma página no seu navegador. Arraste as notas, os extratos ou uma pasta inteira
+e veja a apuração mensal, a carteira e a declaração anual. O servidor escuta só em
+`127.0.0.1`, exige um token por sessão, não carrega nada da internet e apaga os
+arquivos ao fim de cada análise. Há um botão para testar com dados de exemplo.
+
+### Linha de comando
 
 As entradas podem ser notas de corretagem em PDF (com o extra `pdf`), os extratos
 da Área do Investidor da B3 em XLSX ou um CSV simples, todos juntos:
@@ -119,7 +133,9 @@ src/b3_ir/
 ├── parsers/     entradas: CSV manual, notas SINACOR (PDF), extratos da B3 (XLSX), deduplicação
 ├── data/        tabela de ativos gerada do COTAHIST da B3
 ├── catalog.py   nome de pregão → ticker → classe
-├── report/      saídas em texto e JSON
+├── report/      saídas em texto, JSON e CSV
+├── inputs.py    leitura e unificação de todas as entradas (CLI e web)
+├── web/         interface local: servidor só em 127.0.0.1 e página única
 ├── rules.py     registro único de regras fiscais com fonte legal
 └── cli.py       comando b3-ir
 ```

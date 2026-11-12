@@ -5,22 +5,16 @@ from __future__ import annotations
 import argparse
 import sys
 from collections.abc import Sequence
-from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
 
 from b3_ir import __version__, rules
-from b3_ir.catalog import load_catalog
 from b3_ir.domain.annual import build_annual_report
 from b3_ir.domain.assessment import assess_year
-from b3_ir.domain.classify import classify
-from b3_ir.domain.models import CorporateEvent, IncomeEntry, MonthlyAssessment, Operation
+from b3_ir.domain.models import MonthlyAssessment
 from b3_ir.domain.positions import PositionLedger, build_positions
-from b3_ir.errors import B3IRError, ParseError
-from b3_ir.parsers.b3_statements import parse_b3_statement
-from b3_ir.parsers.csv_ops import parse_operations_csv
-from b3_ir.parsers.dedup import deduplicate
-from b3_ir.parsers.sinacor import parse_sinacor
+from b3_ir.errors import B3IRError
+from b3_ir.inputs import Inputs, load_inputs
 from b3_ir.report import csv_out, json_out, text
 
 DISCLAIMER = (
@@ -34,70 +28,8 @@ EXIT_USAGE = 2
 EXIT_INCOMPLETE = 3
 
 
-@dataclass
-class Inputs:
-    operations: list[Operation] = field(default_factory=list)
-    statement_operations: list[Operation] = field(default_factory=list)
-    events: list[CorporateEvent] = field(default_factory=list)
-    income: list[IncomeEntry] = field(default_factory=list)
-    unsupported: list[str] = field(default_factory=list)
-    ignored: list[str] = field(default_factory=list)
-    warnings: list[str] = field(default_factory=list)
-
-
-def _files(entries: Sequence[str]) -> list[Path]:
-    files: list[Path] = []
-    for entry in entries:
-        path = Path(entry)
-        if path.is_dir():
-            files.extend(sorted(p for p in path.rglob("*") if p.is_file()))
-        elif path.is_file():
-            files.append(path)
-        else:
-            raise B3IRError(f"entrada não encontrada: {entry}")
-    return files
-
-
-def load_inputs(entries: Sequence[str]) -> Inputs:
-    inputs = Inputs()
-    for path in _files(entries):
-        suffix = path.suffix.lower()
-        try:
-            if suffix == ".csv":
-                parsed = parse_operations_csv(path)
-                inputs.operations.extend(parsed.operations)
-                inputs.events.extend(parsed.events)
-                continue
-            if suffix == ".pdf":
-                # Notes carry no broker id in correpy; the folder name stands for it.
-                notes = parse_sinacor(path, broker=path.parent.name)
-                inputs.operations.extend(notes.operations)
-                inputs.unsupported.extend(notes.unsupported)
-                continue
-            if suffix == ".xlsx":
-                statement = parse_b3_statement(path)
-                inputs.statement_operations.extend(statement.operations)
-                inputs.events.extend(statement.events)
-                inputs.income.extend(statement.income)
-                inputs.unsupported.extend(statement.unsupported)
-                inputs.warnings.extend(statement.warnings)
-                continue
-        except ParseError as exc:
-            # One bad file must not hide the others (spec, edge cases).
-            inputs.unsupported.append(str(exc))
-            continue
-        inputs.ignored.append(path.name)
-    # Notes and the manual CSV carry costs; the statement copy of the same trade goes.
-    inputs.operations, report = deduplicate(inputs.operations, inputs.statement_operations)
-    inputs.statement_operations = []
-    inputs.warnings.extend(report)
-    return inputs
-
-
 def _ledger(inputs: Inputs, until: date | None = None) -> PositionLedger:
-    classified, warnings = classify(inputs.operations, load_catalog().asset_classes)
-    inputs.warnings.extend(warnings)
-    return build_positions(classified, inputs.events, until)
+    return build_positions(inputs.classified(), inputs.events, until)
 
 
 def _print_notes(inputs: Inputs) -> None:
@@ -162,9 +94,7 @@ def cmd_mensal(args: argparse.Namespace) -> int:
 
 def cmd_anual(args: argparse.Namespace) -> int:
     inputs = load_inputs(args.entradas)
-    classified, warnings = classify(inputs.operations, load_catalog().asset_classes)
-    inputs.warnings.extend(warnings)
-    report = build_annual_report(classified, inputs.events, inputs.income, args.ano)
+    report = build_annual_report(inputs.classified(), inputs.events, inputs.income, args.ano)
     if args.formato == "csv":
         if not args.saida:
             raise B3IRError("--formato csv exige --saida PASTA")
@@ -179,6 +109,13 @@ def cmd_anual(args: argparse.Namespace) -> int:
         w.startswith(rules.UNVERIFIED) for m in report.monthly_table for w in m.warnings
     )
     return EXIT_INCOMPLETE if inputs.unsupported or unverified else EXIT_OK
+
+
+def cmd_web(args: argparse.Namespace) -> int:
+    from b3_ir.web.server import serve  # imported lazily: the CLI never opens a socket
+
+    serve(port=args.porta, open_browser=not args.nao_abrir)
+    return EXIT_OK
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -210,6 +147,11 @@ def build_parser() -> argparse.ArgumentParser:
     posicoes.add_argument("--data", help="data de corte AAAA-MM-DD")
     posicoes.add_argument("--formato", choices=["texto", "json"], default="texto")
     posicoes.set_defaults(handler=cmd_posicoes)
+
+    web = sub.add_parser("web", help="abre a interface no navegador (só neste computador)")
+    web.add_argument("--porta", type=int, default=0, help="porta local (padrão: livre)")
+    web.add_argument("--nao-abrir", action="store_true", help="não abre o navegador")
+    web.set_defaults(handler=cmd_web)
     return parser
 
 

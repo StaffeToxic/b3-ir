@@ -27,6 +27,9 @@ versionamento [SemVer](https://semver.org/lang/pt-BR/).
   224/2025); retenção sobre dividendos acima de R$ 50 mil/mês a partir de 2026.
 - Leis 9.249/1995 e 9.250/1995 e LC 224/2025 em `legislacao/`.
 
+- Interface no navegador (`b3-ir web`): arrastar arquivos ou pastas e ver resumo,
+  apuração mensal, carteira, declaração anual e avisos; servidor só local, com token.
+
 ### Corrigido
 - Day trade agora exige a mesma corretora (Lei 9.959/2000, art. 8º).
 - Saldo de IRRF não passa de um ano para o outro.
