@@ -13,7 +13,13 @@ from typing import Any
 import pytest
 
 from b3_ir.errors import B3IRError
-from b3_ir.web.server import TOKEN_HEADER, make_server, safe_relative_path, url_of
+from b3_ir.web.server import (
+    TOKEN_HEADER,
+    load_or_create_token,
+    make_server,
+    safe_relative_path,
+    url_of,
+)
 
 EXAMPLE = Path(__file__).resolve().parents[1] / "examples" / "operacoes.csv"
 
@@ -49,7 +55,10 @@ def post(srv: Any, body: object, token: str | None) -> tuple[int, dict[str, Any]
 
 def example_body() -> dict[str, Any]:
     data = base64.b64encode(EXAMPLE.read_bytes()).decode()
-    return {"arquivos": [{"caminho": "exemplo/operacoes.csv", "base64": data}]}
+    return {
+        "arquivos": [{"caminho": "exemplo/operacoes.csv", "base64": data}],
+        "aceite_termo": True,
+    }
 
 
 def test_refuses_non_loopback_host() -> None:
@@ -89,8 +98,10 @@ def test_api_matches_cli_results(server: Any) -> None:
     ("body", "message"),
     [
         ({}, "arquivos"),
-        ({"arquivos": []}, "nenhum arquivo"),
-        ({"arquivos": [{"caminho": "a.csv", "base64": "%%%"}]}, "base64"),
+        ({"arquivos": [], "aceite_termo": True}, "nenhum arquivo"),
+        ({"arquivos": [{"caminho": "a.csv", "base64": "%%%"}], "aceite_termo": True}, "base64"),
+        ({"arquivos": [{"caminho": "a.csv", "base64": "YQ=="}]}, "aceitar o termo"),
+        ({"arquivos": [{"caminho": "a.csv", "base64": "YQ=="}], "aceite_termo": "sim"}, "termo"),
     ],
 )
 def test_api_rejects_bad_requests(server: Any, body: object, message: str) -> None:
@@ -101,7 +112,10 @@ def test_api_rejects_bad_requests(server: Any, body: object, message: str) -> No
 
 def test_unprocessable_data_returns_422(server: Any) -> None:
     csv = "data;tipo;ticker;quantidade;preco\n2026-01-05;venda;PETR4;10;30\n"
-    body = {"arquivos": [{"caminho": "x.csv", "base64": base64.b64encode(csv.encode()).decode()}]}
+    body = {
+        "arquivos": [{"caminho": "x.csv", "base64": base64.b64encode(csv.encode()).decode()}],
+        "aceite_termo": True,
+    }
     status, result = post(server, body, server.token)
     assert status == 422
     assert "descoberto" in result["erro"]
@@ -122,3 +136,26 @@ def test_safe_relative_path(name: str, expected: str) -> None:
     path = safe_relative_path(name)
     assert path == PurePosixPath(expected)
     assert ".." not in path.parts
+
+
+def test_token_survives_restarts(tmp_path: Path) -> None:
+    # A tab opened before a restart must keep working: same token from the same file.
+    path = tmp_path / "b3-ir" / "web-token"
+    first = load_or_create_token(path)
+    assert len(first) >= 32
+    assert load_or_create_token(path) == first
+    assert make_server(token=first).token == first
+
+
+def test_corrupt_token_file_is_replaced(tmp_path: Path) -> None:
+    path = tmp_path / "web-token"
+    path.write_text("curto", encoding="ascii")
+    assert load_or_create_token(path) != "curto"
+
+
+def test_page_asks_for_the_disclaimer_every_time(server: Any) -> None:
+    with urllib.request.urlopen(url_of(server)) as response:
+        page = response.read().decode()
+    assert 'id="aceite"' in page
+    assert "Li e aceito o termo de isenção de responsabilidade" in page
+    assert 'id="aceite" checked' not in page  # never pre-checked

@@ -10,8 +10,10 @@ from __future__ import annotations
 
 import base64
 import binascii
+import contextlib
 import ipaddress
 import json
+import os
 import re
 import secrets
 import tempfile
@@ -36,6 +38,28 @@ MAX_BODY = 50 * 1024 * 1024
 TOKEN_HEADER = "X-B3IR-Token"
 ROOT_FOLDER = "upload"
 _SAFE = re.compile(r"[^\w.\- ]", re.UNICODE)
+
+
+def token_path() -> Path:
+    """Per-user file that keeps the session token across restarts."""
+    base = os.environ.get("APPDATA") or os.environ.get("XDG_CONFIG_HOME")
+    return Path(base or Path.home() / ".config") / "b3-ir" / "web-token"
+
+
+def load_or_create_token(path: Path | None = None) -> str:
+    """Reuse the saved token so a tab opened before a restart keeps working."""
+    path = path or token_path()
+    try:
+        token = path.read_text(encoding="ascii").strip()
+    except (OSError, UnicodeDecodeError):
+        token = ""
+    if not re.fullmatch(r"[\w-]{32,}", token):
+        token = secrets.token_urlsafe(24)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(token, encoding="ascii")
+        with contextlib.suppress(OSError):  # permissions are best effort on Windows
+            path.chmod(0o600)
+    return token
 
 
 def safe_relative_path(name: str) -> PurePosixPath:
@@ -89,6 +113,9 @@ def analyze_files(uploads: list[tuple[str, bytes]]) -> dict[str, Any]:
 def _decode_uploads(payload: object) -> list[tuple[str, bytes]]:
     if not isinstance(payload, dict) or not isinstance(payload.get("arquivos"), list):
         raise ValueError("corpo deve ter a lista 'arquivos'")
+    if payload.get("aceite_termo") is not True:
+        # The disclaimer must be accepted on every use (spec 002, FR-W06).
+        raise ValueError("é preciso aceitar o termo de isenção de responsabilidade")
     uploads = []
     for item in payload["arquivos"]:
         if not isinstance(item, dict):
@@ -174,12 +201,12 @@ class _Server(ThreadingHTTPServer):
         self.page = page
 
 
-def make_server(port: int = 0, host: str = "127.0.0.1") -> _Server:
+def make_server(port: int = 0, host: str = "127.0.0.1", token: str | None = None) -> _Server:
     """Create the server; only loopback addresses are accepted (FR-W01)."""
     if not ipaddress.ip_address(host).is_loopback:
         raise B3IRError(f"a interface só escuta no próprio computador, não em {host}")
     page = files("b3_ir.web").joinpath("static/index.html").read_text(encoding="utf-8")
-    return _Server((host, port), secrets.token_urlsafe(24), page)
+    return _Server((host, port), token or secrets.token_urlsafe(24), page)
 
 
 def url_of(server: _Server) -> str:
@@ -188,7 +215,7 @@ def url_of(server: _Server) -> str:
 
 
 def serve(port: int = 0, open_browser: bool = True) -> None:
-    server = make_server(port)
+    server = make_server(port, token=load_or_create_token())
     url = url_of(server)
     print(f"b3-ir rodando em {url}")
     print("Os arquivos ficam só neste computador. Ctrl+C para encerrar.")
