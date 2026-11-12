@@ -1,0 +1,18 @@
+__pycache__/
+*.py[cod]
+.venv/
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.claude/settings.local.json
+.scratch/
+# never commit real tax documents
+*.pdf
+*.xlsx
+!tests/fixtures/**/*.pdf
+!tests/fixtures/**/*.xlsx
