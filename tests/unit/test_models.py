@@ -62,9 +62,21 @@ def test_position_average_price() -> None:
 
 def test_bonus_requires_cost() -> None:
     with pytest.raises(ValueError, match="custo"):
-        CorporateEvent(date(2026, 1, 5), "ITSA4", EventKind.BONUS, Decimal("0.1"), None, "x")
+        CorporateEvent(date(2026, 1, 5), "ITSA4", EventKind.BONUS, Decimal("10"), None, "x")
 
 
-def test_split_ratio_must_be_positive() -> None:
-    with pytest.raises(ValueError, match="positiva"):
+def test_event_requires_nonzero_delta() -> None:
+    with pytest.raises(ValueError, match="sem variação"):
         CorporateEvent(date(2026, 1, 5), "ITSA4", EventKind.SPLIT, Decimal("0"), None, "x")
+
+
+@pytest.mark.parametrize(
+    ("kind", "delta"),
+    [
+        (EventKind.SPLIT, Decimal("-100")),
+        (EventKind.REVERSE_SPLIT, Decimal("100")),
+    ],
+)
+def test_event_delta_sign_matches_kind(kind: EventKind, delta: Decimal) -> None:
+    with pytest.raises(ValueError, match="sinal"):
+        CorporateEvent(date(2026, 1, 5), "ITSA4", kind, delta, None, "x")

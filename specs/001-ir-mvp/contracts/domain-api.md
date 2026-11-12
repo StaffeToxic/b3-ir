@@ -22,7 +22,9 @@ Operation(trade_date, settlement_date, ticker, side, quantity, unit_price,
           trade_type: TradeType | None = None)
 # Parsers leave asset_class and trade_type as None; classify() fills both.
 # Domain functions after classify() raise if either is still None.
-CorporateEvent(date, ticker, kind, ratio: Decimal, bonus_unit_cost: Decimal | None, source)
+CorporateEvent(date, ticker, kind, quantity_delta: Decimal, bonus_unit_cost: Decimal | None, source)
+# quantity_delta is signed: + for split/bonus credits, - for reverse split debits,
+# matching how B3 reports them (research/r6-prior-art.md, D-R6-1).
 IncomeEntry(payment_date, ticker, kind, gross, withheld, source)
 Position(ticker, asset_class, quantity, total_cost)        # .average_price property
 Darf(code: str, period: str, due_date, amount)              # period "AAAA-MM"

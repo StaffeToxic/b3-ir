@@ -57,4 +57,17 @@ with the test cases worth porting.
 
 ## Decisions
 
-_None yet._
+### D-R6-1 — Corporate events carry a signed quantity delta
+
+- **Decision**: `CorporateEvent.quantity_delta` (signed) replaces `ratio`.
+- **Rationale**: B3 Movimentação reports splits/reverse splits/bonus as shares
+  credited or debited, not as a factor (MonnaIA `positions.ts`). Using the delta
+  avoids recomputing a ratio and rounding fractional shares.
+- **Alternatives**: keep `ratio` and derive it from the delta (rejected: lossy when
+  fractions are auctioned).
+
+### D-R6-2 — Oversold positions are refused
+
+- **Decision**: a sale larger than the position raises `UnsupportedOperationError`.
+- **Rationale**: Constitution VI; MonnaIA clamps to zero, which hides missing data.
+- **Alternatives**: clamp (rejected), allow short positions (out of MVP scope).

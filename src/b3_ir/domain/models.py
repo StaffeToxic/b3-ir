@@ -94,17 +94,28 @@ class Operation:
 
 @dataclass(frozen=True, slots=True)
 class CorporateEvent:
+    """Split, reverse split or bonus, as B3 reports it: shares credited or debited.
+
+    ``quantity_delta`` is signed: positive for split and bonus credits, negative for
+    reverse splits (research.md D-R6-1).
+    """
+
     date: date
     ticker: str
     kind: EventKind
-    ratio: Decimal
+    quantity_delta: Decimal
     bonus_unit_cost: Decimal | None
     source: str
 
     def __post_init__(self) -> None:
-        _require_decimal("ratio", self.ratio)
-        if self.ratio <= ZERO:
-            raise ValueError(f"proporção deve ser positiva: {self.ratio}")
+        _require_decimal("quantity_delta", self.quantity_delta)
+        if self.quantity_delta == ZERO:
+            raise ValueError("evento sem variação de quantidade")
+        expected_negative = self.kind is EventKind.REVERSE_SPLIT
+        if (self.quantity_delta < ZERO) != expected_negative:
+            raise ValueError(
+                f"sinal de quantidade incompatível com {self.kind}: {self.quantity_delta}"
+            )
         if self.kind is EventKind.BONUS:
             if self.bonus_unit_cost is None:
                 raise ValueError("bonificação exige custo unitário atribuído")
