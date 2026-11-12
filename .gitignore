@@ -16,3 +16,5 @@ htmlcov/
 *.xlsx
 !tests/fixtures/**/*.pdf
 !tests/fixtures/**/*.xlsx
+# PyInstaller
+*.spec

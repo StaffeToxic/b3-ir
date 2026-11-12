@@ -1,6 +1,8 @@
 <!--
 Sync Impact Report
-- Version: (template) → 1.0.0 (initial ratification)
+- Version: 1.0.0 → 1.0.1 (PATCH, 2026-11-12): Principle IV clarifies that a
+  loopback-only local web UI is allowed; outbound requests stay forbidden.
+- Previous: (template) → 1.0.0 (initial ratification)
 - Principles added: I–VII (all new)
 - Sections added: Technical Constraints, Development Workflow, Governance
 - Templates: .specify/templates/tasks-template.md marks tests as OPTIONAL; this
@@ -42,7 +44,9 @@ apply to this project.
 
 ### IV. Privacy by default (NON-NEGOTIABLE)
 
-All processing is local. No network calls, telemetry, or uploads at runtime.
+All processing is local. No outbound network calls, telemetry, or uploads at
+runtime. The optional local web interface (`b3-ir web`) may listen on the loopback
+interface only, and its page loads nothing from outside (no CDN, fonts or scripts).
 No real user document (brokerage note, B3 statement) is ever committed: fixtures
 are synthetic or fully anonymized (no CPF, account number, name, or real
 broker client code). Logs never print CPF or account numbers.
@@ -100,4 +104,4 @@ removed/redefined principles, MINOR for added ones, PATCH for wording) and a new
 Sync Impact Report. Every review checks compliance with the NON-NEGOTIABLE
 principles before merge.
 
-**Version**: 1.0.0 | **Ratified**: 2026-11-11 | **Last Amended**: 2026-11-11
+**Version**: 1.0.1 | **Ratified**: 2026-11-11 | **Last Amended**: 2026-11-12

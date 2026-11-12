@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>b3-ir · Imposto de renda da bolsa</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f7a5a'/%3E%3Cpath d='M9 21l5-6 4 3 5-7' stroke='white' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --ink: #171717; --ink-strong: #1d1d1f; --muted: rgba(0,0,0,.52); --faint: rgba(0,0,0,.36);
+    --line: rgba(0,0,0,.08); --card: #fff; --soft: #f3f5f3; --accent: #0f7a5a; --accent-2: #3fb58c;
+    --good: #12805c; --good-bg: #e8f6f0; --warn: #9a6200; --warn-bg: #fff4dc; --bad: #b42318; --bad-bg: #fdecea;
+    --radius: 20px; --pill: 9999px;
+    --shadow: 0 4px 24px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+    --font: Geist, "Geist Fallback", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font-family: var(--font); color: var(--ink); background: #fff; -webkit-font-smoothing: antialiased; }
+  button, input, select { font: inherit; color: inherit; }
+  .hero-bg {
+    position: absolute; inset: 0 0 auto 0; height: 760px; z-index: -1;
+    background:
+      radial-gradient(rgba(15,122,90,.16) 1px, transparent 1.4px) 0 0 / 18px 18px,
+      linear-gradient(180deg, #e3f2ea 0%, #f1f8f4 45%, #fff 100%);
+    mask-image: linear-gradient(180deg, #000 60%, transparent);
+  }
+  .wrap { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
+
+  /* Floating pill bar */
+  .bar {
+    position: sticky; top: 14px; z-index: 10; margin: 14px auto 0; width: fit-content; max-width: calc(100% - 24px);
+    display: flex; align-items: center; gap: 4px; padding: 6px 6px 6px 16px; border-radius: var(--pill);
+    background: rgba(255,255,255,.72); backdrop-filter: blur(16px) saturate(1.4); box-shadow: var(--shadow);
+  }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; letter-spacing: -.3px; margin-right: 10px; white-space: nowrap; }
+  .brand i { width: 22px; height: 22px; border-radius: 7px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); display: grid; place-items: center; }
+  .bar a { color: var(--muted); text-decoration: none; font-size: 14px; padding: 8px 10px; border-radius: var(--pill); white-space: nowrap; }
+  .bar a:hover { color: var(--ink); background: rgba(0,0,0,.04); }
+  .btn { display: inline-flex; align-items: center; gap: 8px; border: 0; cursor: pointer; border-radius: var(--pill); padding: 10px 18px; font-weight: 600; font-size: 14px; transition: transform .12s ease, box-shadow .12s ease, background .12s; }
+  .btn:active { transform: scale(.98); }
+  .btn-dark { background: var(--ink); color: #fff; box-shadow: 0 0 0 3px rgba(15,122,90,.18), 0 6px 18px rgba(23,23,23,.18); }
+  .btn-dark:hover { background: #000; box-shadow: 0 0 0 4px rgba(15,122,90,.28), 0 8px 22px rgba(23,23,23,.22); }
+  .btn-light { background: #fff; color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+  .btn-light:hover { background: var(--soft); }
+  .btn-ghost { background: transparent; color: var(--muted); padding: 8px 12px; }
+  .btn-ghost:hover { color: var(--ink); background: rgba(0,0,0,.04); }
+  .btn:focus-visible, .nav button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Hero */
+  .hero { text-align: center; padding: 72px 0 28px; }
+  .chip { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); background: rgba(255,255,255,.7); padding: 6px 12px; border-radius: var(--pill); box-shadow: inset 0 0 0 1px var(--line); }
+  .chip b { width: 8px; height: 8px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 3px var(--good-bg); }
+  h1 { font-size: clamp(36px, 6vw, 56px); line-height: 1.04; letter-spacing: -1.6px; margin: 20px auto 16px; max-width: 760px; color: var(--ink-strong); }
+  .lead { font-size: 17px; line-height: 1.55; color: var(--muted); max-width: 600px; margin: 0 auto; }
+
+  /* Disclaimer gate */
+  .terms { max-width: 760px; margin: 32px auto 0; text-align: left; background: #fff; border-radius: 18px; box-shadow: var(--shadow); padding: 18px 20px; }
+  .terms label { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; font-size: 15px; line-height: 1.45; }
+  .terms input { width: 20px; height: 20px; margin: 1px 0 0; accent-color: var(--accent); flex: none; cursor: pointer; }
+  .terms details { margin: 10px 0 0 32px; font-size: 13px; color: var(--muted); }
+  .terms summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+  .terms ol { margin: 10px 0 0; padding-left: 18px; line-height: 1.55; }
+  .terms.ok { box-shadow: inset 0 0 0 1.5px var(--good), var(--shadow); }
+  .locked { opacity: .45; filter: grayscale(.6); pointer-events: none; }
+
+  /* Drop zone */
+  .drop {
+    margin: 36px auto 0; max-width: 760px; border-radius: 28px; padding: 36px 24px; text-align: center;
+    background: rgba(255,255,255,.78); backdrop-filter: blur(10px); box-shadow: var(--shadow);
+    outline: 2px dashed rgba(15,122,90,.28); outline-offset: -12px; transition: outline-color .15s, transform .15s, background .15s;
+  }
+  .drop.over { outline-color: var(--accent); transform: scale(1.01); background: #fff; }
+  .drop .icon { width: 56px; height: 56px; margin: 0 auto 14px; border-radius: 16px; display: grid; place-items: center; background: linear-gradient(135deg, #0b2a20, #136148); box-shadow: 0 10px 24px rgba(19,97,72,.30); }
+  .drop h2 { font-size: 20px; letter-spacing: -.4px; margin: 0 0 6px; }
+  .drop p { margin: 0 0 18px; color: var(--muted); font-size: 14px; }
+  .drop .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .types { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }
+  .types span { font-size: 12px; color: var(--muted); background: var(--soft); padding: 5px 10px; border-radius: var(--pill); }
+  .busy { display: none; margin-top: 16px; color: var(--muted); font-size: 14px; }
+  .busy.on { display: block; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(15,122,90,.25); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; vertical-align: -2px; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .notice { max-width: 760px; margin: 16px auto 0; font-size: 13px; color: var(--muted); text-align: center; line-height: 1.5; }
+  .notice a { color: inherit; }
+  .error { max-width: 760px; margin: 16px auto 0; padding: 12px 16px; border-radius: 14px; background: var(--bad-bg); color: var(--bad); font-size: 14px; display: none; text-align: left; }
+  .error.on { display: block; }
+
+  /* Window */
+  .window { scroll-margin-top: 84px; margin: 48px auto 0; border-radius: 22px; background: var(--card); box-shadow: 0 30px 80px rgba(12,48,37,.12), 0 2px 6px rgba(0,0,0,.06); overflow: hidden; display: none; }
+  .window.on { display: block; animation: rise .35s ease; }
+  @keyframes rise { from { opacity: 0; transform: translateY(12px); } }
+  .titlebar { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); background: #fbfbfd; }
+  .dots { display: flex; gap: 7px; }
+  .dots i { width: 12px; height: 12px; border-radius: 50%; background: #ff5f57; }
+  .dots i:nth-child(2) { background: #febc2e; } .dots i:nth-child(3) { background: #28c840; }
+  .titlebar .title { font-size: 13px; color: var(--muted); flex: 1; text-align: center; }
+  .titlebar select { border: 0; background: var(--soft); border-radius: var(--pill); padding: 6px 12px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .body { display: grid; grid-template-columns: 220px 1fr; min-height: 520px; }
+  .nav { border-right: 1px solid var(--line); padding: 14px 10px; background: #fcfcfe; }
+  .nav button { width: 100%; display: flex; justify-content: space-between; align-items: center; border: 0; background: transparent; padding: 9px 12px; border-radius: 10px; font-size: 14px; color: var(--muted); cursor: pointer; text-align: left; }
+  .nav button:hover { background: rgba(0,0,0,.04); color: var(--ink); }
+  .nav button.on { background: rgba(15,122,90,.10); color: var(--accent); font-weight: 600; }
+  .nav .count { font-size: 11px; font-weight: 700; background: var(--warn-bg); color: var(--warn); border-radius: var(--pill); padding: 1px 7px; }
+  .nav hr { border: 0; border-top: 1px solid var(--line); margin: 12px 6px; }
+  .nav .small { font-size: 12px; color: var(--faint); padding: 0 12px; line-height: 1.5; }
+  .pane { padding: 28px; overflow-x: auto; }
+  .pane h3 { font-size: 22px; letter-spacing: -.5px; margin: 0 0 4px; }
+  .pane .sub { color: var(--muted); font-size: 14px; margin: 0 0 22px; }
+  .view { display: none; } .view.on { display: block; }
+
+  /* Cards */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .card { border-radius: var(--radius); padding: 18px 20px; box-shadow: inset 0 0 0 1px var(--line); background: #fff; }
+  .card.dark { background: #1a1a1a; color: #fff; box-shadow: none; }
+  .card .k { font-size: 13px; color: var(--muted); } .card.dark .k { color: rgba(255,255,255,.6); }
+  .card .v { font-size: 26px; font-weight: 700; letter-spacing: -.6px; margin-top: 6px; }
+  .card .d { font-size: 12px; color: var(--faint); margin-top: 4px; } .card.dark .d { color: rgba(255,255,255,.5); }
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .list { list-style: none; margin: 10px 0 0; padding: 0; font-size: 14px; }
+  .list li { display: flex; gap: 10px; padding: 7px 0; line-height: 1.4; }
+  .list li::before { content: "✓"; color: #4ade80; font-weight: 700; }
+  .card:not(.dark) .list li::before { content: "•"; color: var(--warn); }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font-size: 12px; font-weight: 600; color: var(--faint); text-transform: uppercase; letter-spacing: .4px; padding: 0 12px 10px; }
+  td { padding: 12px; border-top: 1px solid var(--line); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tr:hover td { background: #fbfbfd; }
+  .neg { color: var(--bad); } .pos { color: var(--good); }
+  .tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .3px; padding: 3px 8px; border-radius: var(--pill); text-transform: uppercase; }
+  .tag.acao { background: #eef2ff; color: #3730a3; } .tag.fii { background: #ecfdf5; color: #065f46; } .tag.etf { background: #fef3f2; color: #9f1239; }
+  .darf { display: inline-flex; flex-direction: column; align-items: flex-end; }
+  .darf b { background: var(--ink); color: #fff; padding: 4px 10px; border-radius: var(--pill); font-size: 13px; }
+  .darf small { color: var(--faint); font-size: 11px; margin-top: 3px; }
+  .muted { color: var(--faint); }
+  .empty { padding: 40px; text-align: center; color: var(--muted); background: var(--soft); border-radius: var(--radius); }
+  .section-title { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 28px 0 12px; }
+  .section-title h4 { margin: 0; font-size: 16px; letter-spacing: -.2px; }
+  .kv { display: grid; grid-template-columns: 1fr auto; gap: 0; font-size: 14px; }
+  .kv div { padding: 11px 0; border-top: 1px solid var(--line); }
+  .kv div:nth-child(even) { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .msg { padding: 12px 14px; border-radius: 12px; font-size: 14px; margin-bottom: 8px; line-height: 1.45; }
+  .msg.bad { background: var(--bad-bg); color: var(--bad); }
+  .msg.warn { background: var(--warn-bg); color: var(--warn); }
+  .msg.info { background: var(--soft); color: var(--muted); }
+
+  /* Sections below */
+  .how { padding: 96px 0 24px; }
+  .how h2 { text-align: center; font-size: clamp(28px, 4vw, 40px); letter-spacing: -1px; margin: 0 0 10px; }
+  .how .lead { text-align: center; margin-bottom: 36px; }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .step { border-radius: var(--radius); padding: 22px; box-shadow: inset 0 0 0 1px var(--line); }
+  .step .n { width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; font-weight: 700; color: var(--accent); background: rgba(15,122,90,.1); margin-bottom: 14px; }
+  .step h4 { margin: 0 0 6px; font-size: 16px; } .step p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+  .compare { margin-top: 56px; }
+  footer { padding: 48px 0 56px; text-align: center; color: var(--faint); font-size: 13px; line-height: 1.6; }
+  footer a { color: var(--muted); }
+  .hidden { display: none !important; }
+
+  @media (max-width: 860px) {
+    .body { grid-template-columns: 1fr; }
+    .nav { display: flex; overflow-x: auto; gap: 4px; border-right: 0; border-bottom: 1px solid var(--line); }
+    .nav button { width: auto; white-space: nowrap; } .nav hr, .nav .small { display: none; }
+    .duo, .steps { grid-template-columns: 1fr; }
+    .bar a.opt { display: none; }
+    .pane { padding: 20px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="hero-bg" aria-hidden="true"></div>
+
+<nav class="bar" aria-label="Navegação">
+  <span class="brand"><i aria-hidden="true"><svg width="13" height="13" viewBox="0 0 16 16"><path d="M2 11l4-4.5 3 2.3L14 3" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></i>b3-ir</span>
+  <a href="#como" class="opt">Como funciona</a>
+  <a href="#privacidade" class="opt">Privacidade</a>
+  <a href="#aviso" class="opt">Aviso legal</a>
+  <button class="btn btn-dark" type="button" data-pick="files">Abrir arquivos
+    <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8m0 0L5 7m3 3l3-3M3 13h10" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+</nav>
+
+<main class="wrap">
+  <section class="hero">
+    <span class="chip"><b aria-hidden="true"></b>Roda só no seu computador · nada é enviado para a internet</span>
+    <h1>Seu imposto da bolsa, conferido linha a linha.</h1>
+    <p class="lead">Arraste suas notas de corretagem e extratos da B3. O b3-ir calcula preço médio, apuração mensal, DARF e os dados da declaração anual, com cada regra ligada ao texto da lei.</p>
+
+    <div class="terms" id="terms">
+      <label><input type="checkbox" id="aceite"> <span><strong>Li e aceito o termo de isenção de responsabilidade.</strong> Entendo que o b3-ir não é consultoria tributária e que conferir os valores e declarar é responsabilidade minha.</span></label>
+      <details>
+        <summary>Ler o termo completo</summary>
+        <ol>
+          <li>O b3-ir é software livre, informativo e educacional. Não substitui contador, advogado tributarista ou consultor habilitado, nem é recomendação de investimento.</li>
+          <li>A apuração, o pagamento de DARF e a declaração anual são obrigações suas perante a Receita Federal; você deve conferir todos os valores.</li>
+          <li>Os resultados podem conter erros, omissões ou regras desatualizadas. Itens não confirmados aparecem como UNVERIFIED, mas a ausência de aviso não garante correção.</li>
+          <li>O software é fornecido "no estado em que se encontra", sem garantias, conforme a Licença MIT.</li>
+          <li>Os autores não respondem por imposto pago a maior ou a menor, multas, juros, malha fina ou quaisquer perdas decorrentes do uso.</li>
+          <li>Os arquivos são processados neste computador e apagados ao fim de cada análise; a guarda dos seus documentos é sua.</li>
+          <li>Projeto independente, sem vínculo com a B3, a Receita Federal, a CVM ou corretoras.</li>
+          <li>Na dúvida, procure um profissional antes de declarar ou pagar.</li>
+        </ol>
+      </details>
+    </div>
+
+    <div class="drop locked" id="drop" tabindex="0" role="button" aria-label="Área para soltar arquivos" aria-disabled="true">
+      <div class="icon" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M12 15V4m0 0L8 8m4-4l4 4M5 14v3a3 3 0 003 3h8a3 3 0 003-3v-3" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h2>Solte aqui seus arquivos ou uma pasta</h2>
+      <p>Use uma subpasta por corretora (ex.: <code>xp/</code>, <code>clear/</code>): é assim que o day trade é separado.</p>
+      <div class="row">
+        <button class="btn btn-dark" type="button" data-pick="files">Escolher arquivos</button>
+        <button class="btn btn-light" type="button" data-pick="folder">Escolher pasta</button>
+        <button class="btn btn-ghost" type="button" id="demo">Ver com dados de exemplo →</button>
+      </div>
+      <div class="types"><span>Notas SINACOR · PDF</span><span>Negociação B3 · XLSX</span><span>Movimentação B3 · XLSX</span><span>Planilha manual · CSV</span></div>
+      <div class="busy" id="busy" role="status"><span class="spinner"></span>Calculando…</div>
+      <input type="file" id="pickFiles" multiple accept=".pdf,.xlsx,.csv" hidden>
+      <input type="file" id="pickFolder" webkitdirectory multiple hidden>
+    </div>
+    <div class="error" id="error" role="alert"></div>
+    <p class="notice" id="aviso"><strong>O b3-ir não é consultoria tributária.</strong> Confira os valores; a responsabilidade pela declaração é sua. Os resultados podem conter erros.</p>
+  </section>
+
+  <section class="window" id="window" aria-label="Resultado">
+    <div class="titlebar">
+      <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="title" id="winTitle">Resultado</div>
+      <label class="hidden" for="year">Ano</label>
+      <select id="year" aria-label="Ano-calendário"></select>
+    </div>
+    <div class="body">
+      <div class="nav" role="tablist" aria-label="Seções do resultado">
+        <button class="on" data-view="resumo" role="tab">Resumo</button>
+        <button data-view="mensal" role="tab">Apuração mensal</button>
+        <button data-view="carteira" role="tab">Carteira</button>
+        <button data-view="anual" role="tab">Declaração anual</button>
+        <button data-view="avisos" role="tab">Avisos <span class="count hidden" id="warnCount"></span></button>
+        <hr>
+        <p class="small">Cada regra tem a fonte legal em <code>docs/regras-fiscais.md</code>.</p>
+      </div>
+      <div class="pane">
+        <div class="view on" id="v-resumo"></div>
+        <div class="view" id="v-mensal"></div>
+        <div class="view" id="v-carteira"></div>
+        <div class="view" id="v-anual"></div>
+        <div class="view" id="v-avisos"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="how" id="como">
+    <h2>Três passos, nenhuma planilha.</h2>
+    <p class="lead">O mesmo cálculo da linha de comando, numa tela.</p>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><h4>Junte os arquivos</h4><p>Notas em PDF, extratos de Negociação e Movimentação da Área do Investidor da B3, ou o CSV manual.</p></div>
+      <div class="step"><div class="n">2</div><h4>Solte aqui</h4><p>Operações repetidas entre nota e extrato são unificadas; a nota prevalece porque tem os custos.</p></div>
+      <div class="step"><div class="n">3</div><h4>Confira e declare</h4><p>DARF de cada mês com vencimento, carteira com preço médio e os campos da declaração anual.</p></div>
+    </div>
+    <div class="duo compare" id="privacidade">
+      <div class="card">
+        <strong>Planilha manual</strong><div class="d">Você é o contador</div>
+        <ul class="list">
+          <li>Preço médio refeito a cada bonificação</li>
+          <li>Prejuízo de day trade misturado com o comum</li>
+          <li>IRRF de 0,005% esquecido no DARF</li>
+          <li>Regra copiada de blog, sem fonte</li>
+        </ul>
+      </div>
+      <div class="card dark">
+        <strong>Com o b3-ir</strong><div class="d">Você confere</div>
+        <ul class="list">
+          <li>Eventos da B3 aplicados ao preço médio</li>
+          <li>Prejuízos separados: comum, day trade e FII</li>
+          <li>IRRF deduzido e compensado mês a mês</li>
+          <li>Cada regra ligada à lei, versionada no projeto</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">
+  b3-ir · software livre (MIT) · os arquivos são processados neste computador e apagados ao fim de cada análise.<br>
+  Projeto independente, sem vínculo com a B3 ou a Receita Federal. Leia o termo de isenção de responsabilidade (DISCLAIMER.md).
+</footer>
+
+<script>
+"use strict";
+const TOKEN = "__B3IR_TOKEN__";
+const EXAMPLE_CSV = `data;tipo;ticker;quantidade;preco;custos;irrf
+2026-01-05;compra;ITSA4;1000;10,00;5,00;0
+2026-01-06;compra;BOVA11;100;120,00;3,00;0
+2026-02-10;venda;ITSA4;400;12,00;2,00;0,24
+2026-03-02;compra;PETR4;2000;30,00;10,00;0
+2026-03-20;venda;PETR4;2000;28,00;10,00;2,80
+2026-04-01;bonificacao;ITSA4;60;5,00;;
+2026-05-15;compra;PETR4;1000;31,00;5,00;0
+2026-05-15;venda;PETR4;1000;31,50;5,00;3,15
+2026-06-10;venda;ITSA4;600;14,00;3,00;0,42
+2026-06-10;venda;BOVA11;100;130,00;3,00;0,65
+`;
+
+const $ = (sel) => document.querySelector(sel);
+const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+const qty = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 8 });
+const money = (s) => brl.format(Number(s || 0));
+const num = (s) => Number(s || 0);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const dateBR = (iso) => iso.split("-").reverse().join("/");
+const CATEGORY = { acoes_comum: "Ações", acoes_day_trade: "Ações · day trade", etf_comum: "ETFs", etf_day_trade: "ETFs · day trade", fii: "FIIs" };
+const CLASS = { acao: "Ação", fii: "FII", etf: "ETF" };
+let result = null;
+
+/* ---------- reading files ---------- */
+function readAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",", 2)[1] || "");
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+async function walk(entry, prefix, out) {
+  if (entry.isFile) {
+    const file = await new Promise((res, rej) => entry.file(res, rej));
+    out.push({ file, path: prefix + file.name });
+  } else if (entry.isDirectory) {
+    const reader = entry.createReader();
+    let batch;
+    do {
+      batch = await new Promise((res, rej) => reader.readEntries(res, rej));
+      for (const child of batch) await walk(child, prefix + entry.name + "/", out);
+    } while (batch.length);
+  }
+}
+async function send(items) {
+  const wanted = items.filter((i) => /\.(pdf|xlsx|csv)$/i.test(i.path));
+  if (!wanted.length) return showError("Nenhum arquivo PDF, XLSX ou CSV encontrado.");
+  const arquivos = [];
+  for (const i of wanted) arquivos.push({ caminho: i.path, base64: await readAsBase64(i.file) });
+  await analyze({ arquivos }, wanted.length);
+}
+const aceite = $("#aceite");
+function accepted() {
+  if (aceite.checked) return true;
+  showError("Marque a caixa do termo de isenção de responsabilidade para continuar.");
+  $("#terms").scrollIntoView({ behavior: "smooth", block: "center" });
+  return false;
+}
+aceite.addEventListener("change", () => {
+  $("#drop").classList.toggle("locked", !aceite.checked);
+  $("#drop").setAttribute("aria-disabled", String(!aceite.checked));
+  $("#terms").classList.toggle("ok", aceite.checked);
+  if (aceite.checked) showError("");
+});
+async function analyze(body, count) {
+  if (!accepted()) return;
+  body.aceite_termo = true;
+  showError("");
+  $("#busy").classList.add("on");
+  try {
+    const res = await fetch("/api/analisar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-B3IR-Token": TOKEN },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (res.status === 403) throw new Error("Sessão expirada: o b3-ir foi reiniciado. Abra o endereço novo mostrado no terminal.");
+    if (!res.ok) throw new Error(data.erro || "Falha ao calcular.");
+    result = data;
+    render(count);
+  } catch (err) {
+    showError(err.message);
+  } finally {
+    $("#busy").classList.remove("on");
+  }
+}
+function showError(message) {
+  const box = $("#error");
+  box.textContent = message;
+  box.classList.toggle("on", Boolean(message));
+}
+
+/* ---------- inputs ---------- */
+const drop = $("#drop");
+document.querySelectorAll("[data-pick]").forEach((b) =>
+  b.addEventListener("click", (e) => { e.stopPropagation(); if (accepted()) $(b.dataset.pick === "folder" ? "#pickFolder" : "#pickFiles").click(); }));
+$("#pickFiles").addEventListener("change", (e) => send([...e.target.files].map((f) => ({ file: f, path: f.name }))));
+$("#pickFolder").addEventListener("change", (e) => send([...e.target.files].map((f) => ({ file: f, path: f.webkitRelativePath || f.name }))));
+$("#demo").addEventListener("click", (e) => {
+  e.stopPropagation();
+  analyze({ arquivos: [{ caminho: "exemplo/operacoes.csv", base64: btoa(EXAMPLE_CSV) }] }, 1);
+});
+drop.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("#pickFiles").click(); } });
+["dragenter", "dragover"].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", async (e) => {
+  if (!accepted()) return;
+  const out = [];
+  const entries = [...e.dataTransfer.items].map((i) => i.webkitGetAsEntry && i.webkitGetAsEntry()).filter(Boolean);
+  if (entries.length) { for (const entry of entries) await walk(entry, "", out); }
+  else { for (const f of e.dataTransfer.files) out.push({ file: f, path: f.name }); }
+  send(out);
+});
+
+/* ---------- navigation ---------- */
+document.querySelectorAll(".nav button").forEach((b) => b.addEventListener("click", () => show(b.dataset.view)));
+function show(view) {
+  document.querySelectorAll(".nav button").forEach((b) => b.classList.toggle("on", b.dataset.view === view));
+  document.querySelectorAll(".view").forEach((v) => v.classList.toggle("on", v.id === "v-" + view));
+}
+$("#year").addEventListener("change", () => renderYear());
+
+/* ---------- rendering ---------- */
+function render(count) {
+  const years = result.anos;
+  $("#year").innerHTML = years.map((y) => `<option value="${y}">${y}</option>`).join("") || "<option>—</option>";
+  if (years.length) $("#year").value = years[years.length - 1];
+  $("#winTitle").textContent = `Resultado · ${count} arquivo${count > 1 ? "s" : ""}`;
+  const warnings = result.avisos.length + result.nao_suportados.length +
+    new Set(Object.values(result.mensal).flat().flatMap((m) => m.warnings)).size;
+  const badge = $("#warnCount");
+  badge.textContent = warnings; badge.classList.toggle("hidden", !warnings);
+  renderYear();
+  renderPositions();
+  renderWarnings();
+  $("#window").classList.add("on");
+  show("resumo");
+  $("#window").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function renderYear() {
+  const year = $("#year").value;
+  renderSummary(year);
+  renderMonthly(year);
+  renderAnnual(year);
+}
+function renderSummary(year) {
+  const months = result.mensal[year] || [];
+  const darfs = months.filter((m) => m.darf);
+  const totalDarf = darfs.reduce((s, m) => s + num(m.darf.amount), 0);
+  const report = result.anual[year];
+  const exempt = report ? num(report.exempt_income.ganhos_acoes_ate_20_mil) : 0;
+  const last = months[months.length - 1];
+  const losses = last ? Object.values(last.loss_balances).reduce((s, v) => s + num(v), 0) : 0;
+  const next = darfs.map((m) => m.darf).find((d) => d.due_date >= new Date().toISOString().slice(0, 10));
+  const pending = [
+    ...result.nao_suportados,
+    ...months.flatMap((m) => m.warnings.filter((w) => w.startsWith("UNVERIFIED") || w.startsWith("saldo de IRRF"))),
+  ];
+  $("#v-resumo").innerHTML = `
+    <h3>Resumo de ${esc(year)}</h3>
+    <p class="sub">${months.length} ${months.length === 1 ? "mês" : "meses"} com vendas · ${result.posicoes.length} ativo(s) na carteira</p>
+    <div class="cards">
+      <div class="card dark"><div class="k">DARF no ano</div><div class="v">${money(totalDarf)}</div><div class="d">${darfs.length} guia(s) · código 6015</div></div>
+      <div class="card"><div class="k">Próximo vencimento</div><div class="v">${next ? dateBR(next.due_date) : "—"}</div><div class="d">${next ? money(next.amount) : "nenhum DARF pendente"}</div></div>
+      <div class="card"><div class="k">Ganhos isentos (ações)</div><div class="v">${money(exempt)}</div><div class="d">vendas até R$ 20 mil no mês</div></div>
+      <div class="card"><div class="k">Prejuízo a compensar</div><div class="v">${money(losses)}</div><div class="d">saldo no fim do período</div></div>
+    </div>
+    <div class="duo">
+      <div class="card dark"><strong>Pronto para conferir</strong>
+        <ul class="list">
+          <li>Preço médio com custos e eventos da B3</li>
+          <li>Day trade separado por corretora</li>
+          <li>IRRF deduzido e compensado</li>
+        </ul></div>
+      <div class="card"><strong>${pending.length ? "Precisa da sua atenção" : "Nada pendente"}</strong>
+        <ul class="list">${pending.length ? pending.slice(0, 4).map((p) => `<li>${esc(p)}</li>`).join("") : "<li>Nenhum arquivo recusado nem regra não confirmada</li>"}</ul>
+        ${pending.length > 4 ? `<button class="btn btn-ghost" type="button" onclick="show('avisos')">Ver todos (${pending.length}) →</button>` : ""}
+      </div>
+    </div>`;
+}
+function renderMonthly(year) {
+  const months = result.mensal[year] || [];
+  if (!months.length) { $("#v-mensal").innerHTML = `<h3>Apuração mensal</h3><div class="empty">Nenhuma venda em ${esc(year)}.</div>`; return; }
+  const rows = months.map((m) => {
+    const parts = Object.entries(m.results).filter(([, v]) => num(v) !== 0)
+      .map(([k, v]) => `<div>${CATEGORY[k]} <span class="${num(v) < 0 ? "neg" : "pos"}">${money(v)}</span></div>`).join("");
+    const loss = Object.entries(m.loss_balances).filter(([, v]) => num(v) > 0).map(([k, v]) => `${k.replace("_", " ")}: ${money(v)}`).join("<br>");
+    const darf = m.darf
+      ? `<span class="darf"><b>${money(m.darf.amount)}</b><small>vence ${dateBR(m.darf.due_date)}</small></span>`
+      : num(m.carryover) ? `<span class="muted">${money(m.carryover)} acumulado</span>` : `<span class="muted">sem DARF</span>`;
+    return `<tr><td><strong>${m.month.split("-").reverse().join("/")}</strong></td><td>${parts}</td>
+      <td class="num">${num(m.exempt) ? money(m.exempt) : '<span class="muted">—</span>'}</td>
+      <td class="num">${loss || '<span class="muted">—</span>'}</td>
+      <td class="num">${num(m.irrf_used) ? money(m.irrf_used) : '<span class="muted">—</span>'}</td>
+      <td class="num">${darf}</td></tr>`;
+  }).join("");
+  $("#v-mensal").innerHTML = `<h3>Apuração mensal</h3><p class="sub">Resultado de cada mês por categoria, já com custos, compensação de prejuízo e IRRF.</p>
+    <table><thead><tr><th>Mês</th><th>Resultado</th><th class="num">Isento</th><th class="num">Prejuízo a compensar</th><th class="num">IRRF deduzido</th><th class="num">DARF</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+function renderPositions() {
+  const list = result.posicoes;
+  $("#v-carteira").innerHTML = `<h3>Carteira</h3><p class="sub">Posição atual com preço médio de aquisição (inclui custos das notas).</p>` + (list.length
+    ? `<table><thead><tr><th>Ativo</th><th>Classe</th><th class="num">Quantidade</th><th class="num">Preço médio</th><th class="num">Custo total</th></tr></thead><tbody>${list.map((p) =>
+      `<tr><td><strong>${esc(p.ticker)}</strong></td><td><span class="tag ${p.asset_class}">${CLASS[p.asset_class]}</span></td><td class="num">${qty.format(num(p.quantity))}</td><td class="num">${money(num(p.total_cost) / num(p.quantity))}</td><td class="num">${money(p.total_cost)}</td></tr>`).join("")}</tbody></table>`
+    : `<div class="empty">Nenhuma posição aberta.</div>`);
+}
+function renderAnnual(year) {
+  const r = result.anual[year];
+  if (!r) { $("#v-anual").innerHTML = `<h3>Declaração anual</h3><div class="empty">Sem dados para ${esc(year)}.</div>`; return; }
+  const assets = r.assets.map((a) => `<tr><td><strong>${esc(a.ticker)}</strong></td><td><span class="tag ${a.asset_class}">${CLASS[a.asset_class]}</span></td>
+    <td class="num">${qty.format(num(a.quantity))}</td><td class="num">${money(a.cost_previous_year)}</td><td class="num">${money(a.cost)}</td></tr>`).join("");
+  const labels = { ganhos_acoes_ate_20_mil: "Ganhos líquidos em ações (vendas até R$ 20 mil no mês)", dividendos: "Lucros e dividendos recebidos", rendimentos_fii: "Rendimentos de fundos imobiliários", jcp: "Juros sobre capital próprio" };
+  const kv = (obj) => Object.entries(obj).map(([k, v]) => `<div>${labels[k] || k}</div><div>${money(v)}</div>`).join("");
+  $("#v-anual").innerHTML = `<h3>Declaração ${num(year) + 1} · ano-calendário ${esc(year)}</h3>
+    <p class="sub">Use os nomes dos campos para localizá-los no programa da Receita; os códigos mudam a cada ano.</p>
+    <div class="section-title"><h4>Bens e Direitos</h4><button class="btn btn-light" type="button" id="dlAssets">Baixar CSV</button></div>
+    ${assets ? `<table><thead><tr><th>Ativo</th><th>Classe</th><th class="num">Quantidade</th><th class="num">31/12/${num(year) - 1}</th><th class="num">31/12/${esc(year)}</th></tr></thead><tbody>${assets}</tbody></table>` : `<div class="empty">Nenhum ativo em 31/12.</div>`}
+    <div class="duo" style="margin-top:24px">
+      <div><div class="section-title"><h4>Rendimentos isentos</h4></div><div class="kv">${kv(r.exempt_income)}</div></div>
+      <div><div class="section-title"><h4>Tributação exclusiva</h4></div><div class="kv">${kv(r.exclusive_income)}</div></div>
+    </div>
+    ${r.warnings.length ? `<div class="section-title"><h4>Observações</h4></div>${r.warnings.map((w) => `<div class="msg info">${esc(w)}</div>`).join("")}` : ""}
+    <div class="section-title"><h4>Tudo em JSON</h4><button class="btn btn-light" type="button" id="dlJson">Baixar JSON</button></div>`;
+  $("#dlAssets").addEventListener("click", () => {
+    const fmt = (s) => num(s).toFixed(2).replace(".", ",");
+    const lines = [`ticker;classe;quantidade;situacao_${num(year) - 1};situacao_${year}`]
+      .concat(r.assets.map((a) => [a.ticker, a.asset_class, String(num(a.quantity)).replace(".", ","), fmt(a.cost_previous_year), fmt(a.cost)].join(";")));
+    download(`bens_e_direitos_${year}.csv`, "﻿" + lines.join("\r\n"), "text/csv");
+  });
+  $("#dlJson").addEventListener("click", () => download(`b3-ir_${year}.json`, JSON.stringify(result, null, 2), "application/json"));
+}
+function renderWarnings() {
+  const block = (items, cls) => items.map((i) => `<div class="msg ${cls}">${esc(i)}</div>`).join("");
+  // Month warnings: the same note on every month is shown once; the rest keep their month.
+  const months = Object.values(result.mensal).flat();
+  const repeated = new Set(months.flatMap((m) => m.warnings).filter((w, _, all) => all.filter((x) => x === w).length > 1));
+  const monthly = [...repeated].concat(months.flatMap((m) => m.warnings.filter((w) => !repeated.has(w)).map((w) => `${m.month}: ${w}`)));
+  const unverified = monthly.filter((w) => w.includes("UNVERIFIED"));
+  const notes = monthly.filter((w) => !w.includes("UNVERIFIED"));
+  const total = result.nao_suportados.length + result.avisos.length + monthly.length + result.ignorados.length;
+  $("#v-avisos").innerHTML = `<h3>Avisos</h3><p class="sub">Itens recusados nunca entram no cálculo: o b3-ir prefere avisar a adivinhar.</p>` + (total
+    ? block(result.nao_suportados, "bad") + block(unverified, "warn") + block(result.avisos, "warn") + block(notes, "info") +
+      (result.ignorados.length ? `<div class="msg info">Ignorados: ${esc(result.ignorados.join(", "))}</div>` : "")
+    : `<div class="empty">Nenhum aviso. Tudo foi lido e calculado com regras confirmadas.</div>`);
+}
+function download(name, content, type) {
+  const url = URL.createObjectURL(new Blob([content], { type }));
+  const a = Object.assign(document.createElement("a"), { href: url, download: name });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+</script>
+</body>
+</html>

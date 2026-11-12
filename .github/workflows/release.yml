@@ -1,0 +1,85 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - run: ruff check . && mypy && pytest -q
+
+  python-package:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install build twine
+      - run: python -m build
+      - run: twine check dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-package
+          path: dist/*
+
+  windows-exe:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ".[pdf]" pyinstaller==6.22.3
+      - run: >
+          pyinstaller --noconfirm --onefile --console --name b3-ir-windows-x64
+          --collect-data b3_ir --collect-all pymupdf --collect-submodules correpy
+          packaging/b3-ir-web.py
+      - name: Smoke test
+        shell: bash
+        run: |
+          ./dist/b3-ir-windows-x64.exe --version
+          ./dist/b3-ir-windows-x64.exe --sem-aviso mensal examples/operacoes.csv | grep "DARF 6015: R\$ 91,81"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe
+          path: dist/b3-ir-windows-x64.exe
+
+  publish:
+    needs: [python-package, windows-exe]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: assets
+          merge-multiple: true
+      - name: Checksums
+        run: cd assets && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            cat "docs/releases/${GITHUB_REF_NAME}.md"
+            echo
+            echo '## SHA-256'
+            echo
+            echo '```'
+            cat assets/SHA256SUMS.txt
+            echo '```'
+          } > notes.md
+          gh release create "$GITHUB_REF_NAME" assets/* \
+            --title "b3-ir ${GITHUB_REF_NAME}" --notes-file notes.md --latest

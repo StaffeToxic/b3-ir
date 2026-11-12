@@ -1,18 +1,30 @@
 # b3-ir
 
 [![CI](https://github.com/StaffeToxic/b3-ir/actions/workflows/ci.yml/badge.svg)](https://github.com/StaffeToxic/b3-ir/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/StaffeToxic/b3-ir)](https://github.com/StaffeToxic/b3-ir/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 
-**Biblioteca e CLI em Python para calcular o Imposto de Renda de ações, FIIs e
-ETFs negociados na B3**: preço médio, apuração mensal, DARF, day trade, isenção
-de vendas de ações e dados para a declaração anual (DIRPF).
+**Calcule o Imposto de Renda de ações, FIIs e ETFs da B3 no seu computador**:
+preço médio, apuração mensal, DARF, day trade, isenção de vendas de ações e os
+dados da declaração anual (DIRPF). Interface no navegador, linha de comando e
+biblioteca Python — com cada regra ligada ao texto da lei.
+
+![Resultado no b3-ir: DARF do ano, isentos, prejuízo a compensar e pendências](docs/img/interface-resultado.png)
+
+## Baixar
+
+| Para | Como |
+|---|---|
+| **Windows, sem instalar nada** | Baixe o `b3-ir-windows-x64.exe` na [última versão](https://github.com/StaffeToxic/b3-ir/releases/latest) e dê dois cliques: o navegador abre com a interface. |
+| **Quem tem Python 3.11+** | `pip install "b3-ir[pdf] @ https://github.com/StaffeToxic/b3-ir/releases/download/v0.1.0/b3_ir-0.1.0-py3-none-any.whl"` e depois `b3-ir web` |
+
+O executável não é assinado digitalmente, então o Windows pode mostrar "O Windows
+protegeu o computador": clique em **Mais informações → Executar assim mesmo**.
+Para conferir o arquivo, compare o SHA-256 publicado na página da versão.
 
 > [!WARNING]
-> **Em desenvolvimento (pré-alfa).** Ainda não use os resultados para declarar ou
-> pagar imposto.
->
-> O b3-ir **não é consultoria tributária**. Você é o único responsável por
+> **Versão 0.1.** O b3-ir **não é consultoria tributária**. Você é o único responsável por
 > conferir os valores e pela sua declaração. Leia o
 > [Termo de Isenção de Responsabilidade](DISCLAIMER.md) antes de usar.
 
@@ -20,6 +32,7 @@ de vendas de ações e dados para a declaração anual (DIRPF).
 
 | Recurso | Status |
 |---|---|
+| Interface no navegador (`b3-ir web`), 100% local | ✅ pronto |
 | Entrada manual em CSV | ✅ pronto |
 | Preço médio com custos, desdobramento, grupamento e bonificação | ✅ pronto |
 | Separação de day trade e operações comuns | ✅ pronto |
@@ -44,9 +57,7 @@ ativos no exterior, aluguel de ações e venda a descoberto. Esses itens são
 - **Valores exatos**: dinheiro em `Decimal`, nunca ponto flutuante.
 - **Privacidade**: tudo roda localmente, sem acesso à internet e sem telemetria.
 
-## Instalação
-
-Ainda não publicado no PyPI. Para desenvolvimento:
+## Instalação para desenvolvimento
 
 ```bash
 git clone https://github.com/StaffeToxic/b3-ir.git
@@ -62,6 +73,27 @@ pip install -e ".[pdf]"          # opcional: leitura de notas em PDF
 > continua MIT, e só quem instala `b3-ir[pdf]` passa a usar código AGPL.
 
 ## Uso
+
+### Interface no navegador
+
+```bash
+b3-ir web
+```
+
+Abre uma página no seu navegador. Marque o aceite do termo de isenção de
+responsabilidade (pedido a cada uso), arraste as notas, os extratos ou uma pasta
+inteira e veja a apuração mensal, a carteira e a declaração anual. Há um botão para
+testar com dados de exemplo.
+
+O servidor escuta só em `127.0.0.1`, exige um token (guardado na sua pasta de
+configuração, para que uma aba aberta continue valendo depois de reiniciar), não
+carrega nada da internet e apaga os arquivos ao fim de cada análise.
+
+![Tela inicial com o aceite do termo](docs/img/interface-inicio.png)
+
+![Apuração mensal com a guia de DARF](docs/img/interface-mensal.png)
+
+### Linha de comando
 
 As entradas podem ser notas de corretagem em PDF (com o extra `pdf`), os extratos
 da Área do Investidor da B3 em XLSX ou um CSV simples, todos juntos:
@@ -119,7 +151,9 @@ src/b3_ir/
 ├── parsers/     entradas: CSV manual, notas SINACOR (PDF), extratos da B3 (XLSX), deduplicação
 ├── data/        tabela de ativos gerada do COTAHIST da B3
 ├── catalog.py   nome de pregão → ticker → classe
-├── report/      saídas em texto e JSON
+├── report/      saídas em texto, JSON e CSV
+├── inputs.py    leitura e unificação de todas as entradas (CLI e web)
+├── web/         interface local: servidor só em 127.0.0.1 e página única
 ├── rules.py     registro único de regras fiscais com fonte legal
 └── cli.py       comando b3-ir
 ```
