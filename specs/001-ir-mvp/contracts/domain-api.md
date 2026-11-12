@@ -31,7 +31,9 @@ Darf(code: str, period: str, due_date, amount)              # period "AAAA-MM"
 MonthlyAssessment(month, results: dict[Category, Decimal], exempt: Decimal,
                   loss_balances: dict[str, Decimal], irrf_used, tax_due,
                   carryover, darf: Darf | None, incomplete: bool, warnings: tuple[str, ...])
-AnnualReport(year, assets, monthly_table, exempt_income, exclusive_income, warnings)
+AssetEntry(ticker, asset_class, quantity, cost_previous_year, cost)   # .average_price
+AnnualReport(year, assets: tuple[AssetEntry, ...], monthly_table, exempt_income,
+             exclusive_income, warnings)   # warnings: year-level only; month ones stay per month
 ```
 
 `source` is a short string: `"<file name>#<page or row>"` (never contains personal data).
@@ -56,7 +58,7 @@ build_positions(ops, events, until: date | None = None) -> PositionLedger
 build_positions(...).realized -> list[RealizedResult]   # swing sales + day-trade days
 assess_year(realized, year, opening: CarryState | None = None)
     -> tuple[list[MonthlyAssessment], CarryState]   # CarryState chains years
-build_annual_report(ops, events, income, year) -> AnnualReport
+build_annual_report(classified_ops, events, income, year) -> AnnualReport
 ```
 
 Errors: `ParseError(file, detail)`, `UnsupportedOperationError(item, reason)`;

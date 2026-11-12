@@ -46,7 +46,7 @@ def test_monthly_report(capsys: pytest.CaptureFixture[str]) -> None:
     assert Decimal(jun["loss_balances"]["comum"]) == Decimal("3026")
     assert jun["darf"] is None
     # June IRRF 0.42 + 0.65 is never used in 2026 and is reported, not carried.
-    assert "saldo de IRRF de R$ 1.07" in jun["warnings"][-1]
+    assert "saldo de IRRF de R$ 1,07" in jun["warnings"][-1]
 
 
 def test_positions_report(capsys: pytest.CaptureFixture[str]) -> None:
@@ -106,3 +106,33 @@ def test_statement_trades_are_deduplicated_against_notes(
     assert Decimal(positions["WEGE3"]["total_cost"]) == Decimal("400")
     assert any("já estavam nas notas" in w for w in report["avisos"])
     assert code == EXIT_OK
+
+
+def test_annual_report_for_example_year(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    # 31/12/2026: ITSA4 660 - 600 = 60 shares at avg 9.55 = 573.00; BOVA11 and PETR4 closed.
+    # Exempt stock gains: Feb 796 + Jun 2,667 = 3,463.
+    code, report = run_json(capsys, "anual", str(EXAMPLE), "--ano", "2026")
+    assert code == EXIT_OK
+    assets = {a["ticker"]: a for a in report["assets"]}
+    # BOVA11 and PETR4 were bought and sold within 2026: held on neither 31/12, so they
+    # are not "Bens e Direitos" lines (their results are in the monthly table).
+    assert set(assets) == {"ITSA4"}
+    assert Decimal(assets["ITSA4"]["cost"]) == Decimal("573")
+    assert Decimal(report["exempt_income"]["ganhos_acoes_ate_20_mil"]) == Decimal("3463")
+
+    main(["--sem-aviso", "anual", str(EXAMPLE), "--ano", "2026"])
+    out = capsys.readouterr().out
+    assert "ITSA4: 60 ações, preço médio R$ 9,55" in out
+    assert "R$ 3.463,00" in out
+
+    main(["--sem-aviso", "anual", str(EXAMPLE), "--ano", "2026", "--formato", "csv",
+          "--saida", str(tmp_path)])  # fmt: skip
+    rows = (tmp_path / "renda_variavel.csv").read_text(encoding="utf-8-sig").splitlines()
+    assert rows[0].startswith("mes;acoes_comum;acoes_day_trade")
+    assert rows[3].startswith("2026-05;0,00;490,00")
+    assert rows[3].endswith(";91,81")
+
+
+def test_csv_format_requires_output_folder(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["--sem-aviso", "anual", str(EXAMPLE), "--ano", "2026", "--formato", "csv"]) == 1
+    assert "--saida" in capsys.readouterr().err

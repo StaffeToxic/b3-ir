@@ -16,7 +16,7 @@ from decimal import Decimal
 from b3_ir import rules
 from b3_ir.domain.models import AssetClass, Category, Darf, MonthlyAssessment, TradeType
 from b3_ir.domain.positions import RealizedResult
-from b3_ir.money import ZERO, quantize_cents
+from b3_ir.money import ZERO, brl_text, quantize_cents
 
 BUCKET_COMMON = "comum"
 BUCKET_DAY = "day_trade"
@@ -146,7 +146,9 @@ def assess_month(
         pass
     elif payable < r.number("minimum_darf"):
         carryover = payable
-        warnings.append(f"imposto de R$ {payable} abaixo do mínimo; acumulado para o mês seguinte")
+        warnings.append(
+            f"imposto de R$ {brl_text(payable)} abaixo do mínimo; acumulado para o mês seguinte"
+        )
     else:
         r.text("darf_due_rule")
         darf = Darf(
@@ -199,7 +201,7 @@ def assess_year(
         # balance goes to the annual return (Lei 11.033/2004, art. 2º, § 7º, III) and the
         # day-trade balance to a refund request (IN RFB 1.585/2015, art. 65, § 9º).
         note = (
-            f"saldo de IRRF de R$ {quantize_cents(carry.irrf, 'half_up')} não compensado "
+            f"saldo de IRRF de R$ {brl_text(carry.irrf)} não compensado "
             f"em {year}: declaração de ajuste (0,005%) ou pedido de restituição (day trade)"
         )
         if assessments:

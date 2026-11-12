@@ -182,9 +182,24 @@ class MonthlyAssessment:
 
 
 @dataclass(frozen=True, slots=True)
+class AssetEntry:
+    """One line of "Bens e Direitos": position at 31/12 of the previous and current year."""
+
+    ticker: str
+    asset_class: AssetClass
+    quantity: Decimal
+    cost_previous_year: Decimal
+    cost: Decimal
+
+    @property
+    def average_price(self) -> Decimal:
+        return self.cost / self.quantity if self.quantity else ZERO
+
+
+@dataclass(frozen=True, slots=True)
 class AnnualReport:
     year: int
-    assets: tuple[Position, ...]
+    assets: tuple[AssetEntry, ...]
     monthly_table: tuple[MonthlyAssessment, ...]
     exempt_income: dict[str, Decimal]
     exclusive_income: dict[str, Decimal]

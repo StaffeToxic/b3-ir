@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from decimal import Decimal
 
-from b3_ir.domain.models import Category, MonthlyAssessment, Position
+from b3_ir.domain.models import AnnualReport, Category, MonthlyAssessment, Position
 from b3_ir.money import quantize_cents
 
 _CATEGORY_LABELS = {
@@ -73,3 +73,39 @@ def monthly_report(assessments: Sequence[MonthlyAssessment]) -> str:
         lines.extend(f"  ! {w}" for w in a.warnings)
         blocks.append("\n".join(lines))
     return "\n\n".join(blocks)
+
+
+_EXEMPT_LABELS = {
+    "ganhos_acoes_ate_20_mil": "Ganhos líquidos em ações (vendas até R$ 20 mil no mês)",
+    "dividendos": "Lucros e dividendos recebidos",
+    "rendimentos_fii": "Rendimentos de fundos imobiliários (FII)",
+}
+_EXCLUSIVE_LABELS = {"jcp": "Juros sobre capital próprio"}
+_CLASS_LABELS = {"acao": "ações", "fii": "cotas de FII", "etf": "cotas de ETF"}
+
+
+def annual_report(report: AnnualReport) -> str:
+    year = report.year
+    lines = [f"== Declaração anual {year + 1} (ano-calendário {year}) ==", ""]
+    lines.append("Bens e Direitos (custo de aquisição)")
+    if not report.assets:
+        lines.append("  nenhum ativo em 31/12")
+    for a in report.assets:
+        lines.append(
+            f"  {a.ticker}: {_quantity(a.quantity)} {_CLASS_LABELS[a.asset_class.value]}, "
+            f"preço médio {brl(a.average_price)}"
+        )
+        lines.append(
+            f"    situação em 31/12/{year - 1}: {brl(a.cost_previous_year)}  |  "
+            f"31/12/{year}: {brl(a.cost)}"
+        )
+    lines += ["", "Rendimentos isentos e não tributáveis"]
+    lines += [f"  {_EXEMPT_LABELS[k]}: {brl(v)}" for k, v in report.exempt_income.items()]
+    lines += ["", "Rendimentos sujeitos à tributação exclusiva/definitiva"]
+    lines += [f"  {_EXCLUSIVE_LABELS[k]}: {brl(v)}" for k, v in report.exclusive_income.items()]
+    lines += ["", "Renda variável (mês a mês)"]
+    lines.append(monthly_report(report.monthly_table))
+    if report.warnings:
+        lines += ["", "Avisos"]
+        lines += [f"  ! {w}" for w in report.warnings]
+    return "\n".join(lines)

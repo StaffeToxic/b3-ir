@@ -25,6 +25,10 @@ Federal) com o SHA-256 do arquivo de origem.
 | `minimum_darf` | R$ 10,00 | Lei 9.430/1996, art. 68 | VERIFIED |
 | `darf_code_variable_income` | 6015 | Receita Federal, Agenda Tributária (IRPF - Ganhos líquidos em operações em bolsa) | VERIFIED |
 | `darf_due_rule` | último dia útil do mês seguinte | IN RFB 1.585/2015, art. 56, § 5º | VERIFIED |
+| `jcp_withholding_rate` | 15% até 31/12/2025 | Lei 9.249/1995, art. 9º, § 2º (redação anterior à LC 224/2025) | VERIFIED |
+| `jcp_withholding_rate` | 17,5% a partir de 1º/1/2026 | Lei 9.249/1995, art. 9º, § 2º (redação da LC 224/2025, art. 8º; efeitos art. 14, III) | VERIFIED |
+| `dividend_monthly_threshold` | R$ 50.000,00 por empresa no mês, a partir de 2026 | Lei 9.250/1995, art. 6º-A (incluído pela Lei 15.270/2025) | VERIFIED |
+| `dividend_withholding_rate` | 10% sobre o total do mês acima do limite | Lei 9.250/1995, art. 6º-A (incluído pela Lei 15.270/2025) | VERIFIED |
 | `money_rounding` | arredondamento para cima a partir de meio centavo | a confirmar (Sicalc / IN RFB) | UNVERIFIED |
 
 ## Regras de cálculo
@@ -44,12 +48,20 @@ Federal) com o SHA-256 do arquivo de origem.
 | IRRF de day trade | Deduzido no mês, compensado nos meses seguintes; saldo no fim do ano só por pedido de restituição | IN 1.585, art. 65, §§ 8º e 9º |
 | DARF abaixo de R$ 10 | Não é emitido; o valor soma ao período seguinte até atingir R$ 10 | Lei 9.430/1996, art. 68 |
 
+| Dividendos | Isentos | Lei 9.249/1995, art. 10 |
+| Dividendos acima de R$ 50 mil/mês por empresa (a partir de 2026) | Retenção de 10% na fonte; o relatório anual avisa | Lei 9.250/1995, art. 6º-A (Lei 15.270/2025) |
+| Rendimentos de FII | Isentos para pessoa física se o fundo tem ≥ 100 cotistas e o investidor < 10% das cotas; o relatório avisa | Lei 11.033/2004, art. 3º, III e § 1º |
+| JCP | Tributação exclusiva na fonte: 15% até 2025, 17,5% a partir de 2026 | Lei 9.249/1995, art. 9º, § 2º; LC 224/2025, arts. 8º e 14, III |
+
 ### Interpretações adotadas (sem regra expressa)
 
 - **Soma das vendas para a isenção**: o b3-ir soma só as vendas de ações em
   operações comuns, já que a isenção não se aplica ao day trade (IN 1.585, art. 59,
   § 2º, I). Há quem some também as vendas de day trade; confira com um contador
   se você opera os dois no mesmo mês.
+- **Códigos das fichas da declaração**: grupo/código de Bens e Direitos e número do
+  tipo de rendimento mudam com o programa de cada ano e não constam das normas nem do
+  "Perguntas e Respostas IRPF 2026". O relatório anual usa os nomes dos campos.
 - **Feriados**: o vencimento usa o último dia de semana do mês; feriados nacionais
   ainda não são considerados. Confira na
   [Agenda Tributária](https://www.gov.br/receitafederal/pt-br/assuntos/agenda-tributaria).

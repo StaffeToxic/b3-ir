@@ -73,6 +73,30 @@ NORMAS = (
         "planalto-html",
     ),
     Norma(
+        "lei-9249-1995",
+        "Lei",
+        "9.249",
+        "1995-12-26",
+        "Presidência da República",
+        "federal/leis",
+        "Lei nº 9.249, de 26 de dezembro de 1995",
+        "",
+        "https://www.planalto.gov.br/ccivil_03/leis/l9249.htm",
+        "planalto-html",
+    ),
+    Norma(
+        "lei-9250-1995",
+        "Lei",
+        "9.250",
+        "1995-12-26",
+        "Presidência da República",
+        "federal/leis",
+        "Lei nº 9.250, de 26 de dezembro de 1995",
+        "",
+        "https://www.planalto.gov.br/ccivil_03/leis/l9250.htm",
+        "planalto-html",
+    ),
+    Norma(
         "lei-9430-1996",
         "Lei",
         "9.430",
@@ -134,6 +158,18 @@ NORMAS = (
         "Altera a legislação do Imposto sobre a Renda das Pessoas Físicas, inclusive a "
         "tributação mensal e anual de altas rendas.",
         "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/lei/L15270.htm",
+        "planalto-html",
+    ),
+    Norma(
+        "lcp-224-2025",
+        "Lei Complementar",
+        "224",
+        "2025-12-26",
+        "Presidência da República",
+        "federal/leis-complementares",
+        "Lei Complementar nº 224, de 26 de dezembro de 2025",
+        "",
+        "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp224.htm",
         "planalto-html",
     ),
     Norma(
@@ -227,7 +263,7 @@ def planalto_paragraphs(raw: bytes) -> list[str]:
     paragraphs = parser.paragraphs
     # Drop the Planalto page header before the norm's own title.
     for index, text in enumerate(paragraphs):
-        if re.match(r"^(LEI|Lei)\s+N[ºo°]", text):
+        if re.match(r"^(LEI|Lei)( COMPLEMENTAR)?\s+N[ºo°]", text):
             return paragraphs[index:]
     return paragraphs
 
@@ -271,7 +307,10 @@ def front_matter(norma: Norma, sha256: str, baixado_em: str) -> str:
         "orgao": norma.orgao,
         "numero": norma.numero,
         "data": norma.data,
-        "versao_texto": "texto compilado vigente (trechos tachados omitidos)",
+        "versao_texto": (
+            "texto compilado da fonte; trechos tachados omitidos, mas redações superadas "
+            "sem tachado podem permanecer: confira a anotação '(Redação dada por ...)'"
+        ),
         "ementa": norma.ementa,
         "fonte": norma.fonte,
         "sha256_fonte": sha256,

@@ -29,7 +29,7 @@ de vendas de ações e dados para a declaração anual (DIRPF).
 | Nome de pregão → ticker e classe (FII/ETF/ação) a partir do COTAHIST da B3 | ✅ pronto |
 | Extratos da Área do Investidor da B3 (Negociação e Movimentação, XLSX) | ✅ pronto (formato a validar com export real) |
 | Deduplicação entre notas e extrato | ✅ pronto |
-| Dados para a declaração anual (bens e direitos, renda variável) | planejado |
+| Relatório anual (DIRPF): bens e direitos, renda variável, isentos, JCP — texto, JSON e CSV | ✅ pronto |
 
 **Fora do escopo do MVP:** opções, futuros, BDRs, renda fixa, criptoativos,
 ativos no exterior, aluguel de ações e venda a descoberto. Esses itens são
@@ -68,8 +68,10 @@ da Área do Investidor da B3 em XLSX ou um CSV simples, todos juntos:
 
 - **Negociação** (XLSX): operações, quando você não tem todas as notas. Não traz
   custos; se a nota da mesma operação existir, a nota prevalece.
-- **Movimentação** (XLSX): desdobramentos, grupamentos, bonificações e proventos. Para as notas, **use uma pasta por corretora**: o nome da pasta identifica
-a corretora, e day trade só existe dentro da mesma corretora.
+- **Movimentação** (XLSX): desdobramentos, grupamentos, bonificações e proventos.
+
+Para as notas, **use uma pasta por corretora**: o nome da pasta identifica a
+corretora, e day trade só existe dentro da mesma corretora.
 
 ```text
 notas/
@@ -90,6 +92,8 @@ data;tipo;ticker;quantidade;preco;custos;irrf
 b3-ir mensal examples/operacoes.csv
 b3-ir posicoes examples/operacoes.csv --data 2026-04-30
 b3-ir mensal examples/operacoes.csv --formato json
+b3-ir anual examples/operacoes.csv --ano 2026
+b3-ir anual examples/operacoes.csv --ano 2026 --formato csv --saida declaracao/
 ```
 
 Saída (trecho):

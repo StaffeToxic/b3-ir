@@ -24,7 +24,8 @@ REQUIRED = (
     "formato_fonte",
     "baixado_em",
 )
-CITATION = re.compile(r"\b(Lei|IN RFB) (\d[\d.]*)/(\d{4})")
+CITATION = re.compile(r"\b(Lei|IN RFB|LC) (\d[\d.]*)/(\d{4})")
+PREFIX = {"Lei": "lei", "IN RFB": "in-rfb", "LC": "lcp"}
 
 
 def front_matter(path: Path) -> dict[str, str]:
@@ -39,8 +40,7 @@ def cited_ids() -> set[str]:
     for versions in rules.RULES.values():
         for rule in versions:
             for kind, number, year in CITATION.findall(rule.source):
-                prefix = "lei" if kind == "Lei" else "in-rfb"
-                ids.add(f"{prefix}-{number.replace('.', '')}-{year}")
+                ids.add(f"{PREFIX[kind]}-{number.replace('.', '')}-{year}")
     return ids
 
 

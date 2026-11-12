@@ -11,6 +11,7 @@ from pathlib import Path
 
 from b3_ir import __version__, rules
 from b3_ir.catalog import load_catalog
+from b3_ir.domain.annual import build_annual_report
 from b3_ir.domain.assessment import assess_year
 from b3_ir.domain.classify import classify
 from b3_ir.domain.models import CorporateEvent, IncomeEntry, MonthlyAssessment, Operation
@@ -20,7 +21,7 @@ from b3_ir.parsers.b3_statements import parse_b3_statement
 from b3_ir.parsers.csv_ops import parse_operations_csv
 from b3_ir.parsers.dedup import deduplicate
 from b3_ir.parsers.sinacor import parse_sinacor
-from b3_ir.report import json_out, text
+from b3_ir.report import csv_out, json_out, text
 
 DISCLAIMER = (
     "AVISO: o b3-ir não é consultoria tributária. Confira todos os valores; "
@@ -159,6 +160,27 @@ def cmd_mensal(args: argparse.Namespace) -> int:
     return EXIT_INCOMPLETE if inputs.unsupported or unverified else EXIT_OK
 
 
+def cmd_anual(args: argparse.Namespace) -> int:
+    inputs = load_inputs(args.entradas)
+    classified, warnings = classify(inputs.operations, load_catalog().asset_classes)
+    inputs.warnings.extend(warnings)
+    report = build_annual_report(classified, inputs.events, inputs.income, args.ano)
+    if args.formato == "csv":
+        if not args.saida:
+            raise B3IRError("--formato csv exige --saida PASTA")
+        for path in csv_out.write_annual_csv(report, Path(args.saida)):
+            print(path)
+    elif args.formato == "json":
+        print(json_out.dumps({**json_out.to_jsonable(report), "avisos_entrada": inputs.warnings}))
+    else:
+        print(text.annual_report(report))
+    _print_notes(inputs)
+    unverified = any(
+        w.startswith(rules.UNVERIFIED) for m in report.monthly_table for w in m.warnings
+    )
+    return EXIT_INCOMPLETE if inputs.unsupported or unverified else EXIT_OK
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="b3-ir",
@@ -176,11 +198,12 @@ def build_parser() -> argparse.ArgumentParser:
     mensal.add_argument("--formato", choices=["texto", "json"], default="texto")
     mensal.set_defaults(handler=cmd_mensal)
 
-    anual = sub.add_parser("anual", help="dados para a declaração anual (em breve)")
+    anual = sub.add_parser("anual", help="dados para a declaração anual")
     anual.add_argument("entradas", nargs="+", metavar="ENTRADAS")
     anual.add_argument("--ano", type=int, required=True)
     anual.add_argument("--formato", choices=["texto", "json", "csv"], default="texto")
-    anual.add_argument("--saida")
+    anual.add_argument("--saida", help="pasta dos arquivos CSV")
+    anual.set_defaults(handler=cmd_anual)
 
     posicoes = sub.add_parser("posicoes", help="posições e preço médio")
     posicoes.add_argument("entradas", nargs="+", metavar="ENTRADAS")

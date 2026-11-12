@@ -53,7 +53,8 @@ data;tipo;ticker;quantidade;preco;custos;irrf
 ## JSON shape (`--formato json`)
 
 - `mensal`: `{"ano": int, "meses": [MonthlyAssessment], "avisos": [str], "ignorados": [str]}`
-- `anual`: `{"ano": int, "bens_e_direitos": [...], "renda_variavel": [...], "rendimentos_isentos": [...], "tributacao_exclusiva": [...], "avisos": [...]}`
+- `anual`: the `AnnualReport` fields (`year`, `assets`, `monthly_table`,
+  `exempt_income`, `exclusive_income`, `warnings`) plus `avisos_entrada` (input warnings)
 - `posicoes`: `{"data": "AAAA-MM-DD", "posicoes": [Position]}`
 
 Decimals serialize as strings (e.g. `"1234.56"`), dates as ISO 8601.

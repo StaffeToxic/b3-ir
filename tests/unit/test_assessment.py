@@ -146,7 +146,7 @@ def test_irrf_balance_does_not_cross_the_year() -> None:
     # Lei 11.033, art. 2, par. 7, III: leftover goes to the annual return instead.
     months, carry = by_month([res(date(2026, 2, 10), "-10", "30000", irrf="1.50")])
     assert carry.irrf == 0
-    assert "saldo de IRRF de R$ 1.50" in months["2026-02"].warnings[-1]
+    assert "saldo de IRRF de R$ 1,50" in months["2026-02"].warnings[-1]
 
 
 def test_opening_state_from_previous_year() -> None:

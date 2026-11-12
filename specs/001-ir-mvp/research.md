@@ -1,6 +1,6 @@
 # Research — b3-ir MVP
 
-Status: **R1, R2, R3, R4 and R6 decided (2026-11-11); R5 open.** Each front below is dispatched to one Maestri agent, which
+Status: **all fronts (R1-R6) decided (2026-11-11).** Each front below is dispatched to one Maestri agent, which
 writes `research/<front>.md`. Claude reads the reports, decides, and records
 each decision here as Decision / Rationale / Alternatives. Until a decision is
 recorded, every value in the front is `UNVERIFIED` and must not be implemented
@@ -175,3 +175,29 @@ with the test cases worth porting.
   from an official layout; Movimentação labels come from MonnaIA's catalog of real
   exports. Header matching is alias-based and accent-insensitive; both need a test
   against a real export before release.
+
+### D-R5-1 — Annual report: field names, not form codes
+
+- **Decision**: `domain/annual.py` reports assets at 31/12 of the previous and current
+  year (acquisition cost), the monthly table, exempt income (stock gains under the
+  R$ 20,000 limit, dividends, FII income) and exclusive taxation (JCP), naming each
+  DIRPF field instead of printing its group/code or income-type number. Assets bought
+  and sold within the year are not listed (held on neither 31/12).
+- **Sources**: Lei 11.033 art. 3 I and III (+ par. 1: FII exemption needs >= 100
+  holders and < 10% of quotas; reported as a warning, not checkable offline); Lei
+  9.249 art. 10 (dividends) and art. 9 par. 2 (JCP withholding); RFB "Perguntas e
+  Respostas IRPF 2026" v1.00 of 2026-04-23 (q. 320, 707-710; SHA-256
+  f3740385c07fa4dc52f8614d009dd5bd038fbeb8bd935f89da4e9bc26ed2a3b0).
+- **Rationale**: the Q&A and the laws do not give the form codes; they are set by
+  each year's DIRPF program. Printing unverified codes would look authoritative.
+
+### D-R5-2 — JCP rate changes in 2026; dividend withholding from 2026
+
+- **Decision**: `jcp_withholding_rate` has two versions: 15% until 2025-12-31 and
+  17.5% from 2026-01-01 (LC 224/2025 art. 8, effects art. 14 III, amending Lei 9.249
+  art. 9 par. 2). Dividends above R$ 50,000 per month from the same company have 10%
+  withholding from 2026 (Lei 9.250 art. 6-A, by Lei 15.270/2025): reported as a
+  warning per ticker and month (a company with several tickers is summed per ticker,
+  so the warning says the limit is per company).
+- **Finding**: the RFB Q&A 2026 (year 2025) still says 15%, which is right for 2025;
+  the compiled Lei 9.249 shows 17.5%. The registry's validity dates resolve both.

@@ -35,6 +35,11 @@ def parse_brl(text: str) -> Decimal:
     return to_decimal(cleaned)
 
 
+def brl_text(value: Decimal) -> str:
+    """Amount for Portuguese messages: two decimals with a decimal comma ("1,07")."""
+    return f"{quantize_cents(value, 'half_up'):f}".replace(".", ",")
+
+
 def quantize_cents(value: Decimal, rounding: str) -> Decimal:
     """Round to cents with an explicit mode; callers pass the mode cited in rules.py."""
     try:

@@ -37,8 +37,8 @@ by two tickets at once; risk `high` = tax correctness.
 | T010 | `classify.py`: asset class via bundled ticker table + day/swing classification | T002, T003 | src/b3_ir/domain/classify.py, src/b3_ir/data/ | high |
 | T011 | `costs.py`: proportional note cost allocation | T002, T003 | src/b3_ir/domain/costs.py | high |
 | T012 | `positions.py`: average price engine + split/reverse split/bonus + short-sale refusal | T002, T003, T011 | src/b3_ir/domain/positions.py | high |
-| T013 | `assessment.py`: monthly results per category, exemption, loss balances, IRRF, minimum DARF carryover, DARF data | T010, T012, T005 | src/b3_ir/domain/assessment.py | high |
-| T014 | `annual.py`: annual report data | T012, T013 | src/b3_ir/domain/annual.py | high |
+| T013 | `assessment.py`: monthly results per category, exemption, loss balances, IRRF, minimum DARF carryover, DARF data — DONE | T010, T012, T005 | src/b3_ir/domain/assessment.py | high |
+| T014 | `annual.py`: annual report data — DONE | T012, T013 | src/b3_ir/domain/annual.py | high |
 
 ## Wave 3 — Adapters
 
@@ -47,9 +47,9 @@ by two tickets at once; risk `high` = tax correctness.
 | T020 | `parsers/sinacor.py` via correpy extra + COTAHIST catalog (D-R4-1/2) — DONE | T002, T005 | src/b3_ir/parsers/sinacor.py | medium |
 | T021 | `parsers/b3_statements.py` (D-R4-3) — DONE | T002, T005 | src/b3_ir/parsers/b3_statements.py | medium |
 | T022 | `parsers/dedup.py` — DONE | T020, T021 | src/b3_ir/parsers/dedup.py | medium |
-| T023 | `report/` text, JSON, CSV per `contracts/cli.md` | T013, T014 | src/b3_ir/report/ | low |
-| T025 | `parsers/csv_ops.py` manual CSV (FR-015) | T002 | src/b3_ir/parsers/csv_ops.py | low |
-| T024 | `cli.py` commands, exit codes, disclaimer | T022, T023 | src/b3_ir/cli.py | low |
+| T023 | `report/` text, JSON, CSV per `contracts/cli.md` — DONE | T013, T014 | src/b3_ir/report/ | low |
+| T025 | `parsers/csv_ops.py` manual CSV (FR-015) — DONE | T002 | src/b3_ir/parsers/csv_ops.py | low |
+| T024 | `cli.py` commands, exit codes, disclaimer — DONE | T022, T023 | src/b3_ir/cli.py | low |
 
 ## Wave 4 — Release readiness
 
