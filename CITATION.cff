@@ -9,6 +9,8 @@ authors:
     affiliation: "Universidade Federal do Paraná (UFPR)"
 repository-code: "https://github.com/StaffeToxic/b3-ir"
 license: MIT
+version: "0.1.0"
+date-released: "2026-11-12"
 keywords:
   - income tax
   - B3

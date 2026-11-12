@@ -3,7 +3,9 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/);
 versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
-## [Não lançado]
+## [0.1.0] - 2026-11-12
+
+Primeira versão pública.
 
 ### Adicionado
 - Especificação, plano e contratos do MVP (`specs/001-ir-mvp/`).
@@ -28,8 +30,12 @@ versionamento [SemVer](https://semver.org/lang/pt-BR/).
 - Leis 9.249/1995 e 9.250/1995 e LC 224/2025 em `legislacao/`.
 
 - Interface no navegador (`b3-ir web`): arrastar arquivos ou pastas e ver resumo,
-  apuração mensal, carteira, declaração anual e avisos; servidor só local, com token.
+  apuração mensal, carteira, declaração anual e avisos; servidor só local, com token
+  persistente entre reinícios e aceite obrigatório do termo de isenção a cada uso.
+- Executável para Windows (`b3-ir-windows-x64.exe`) e wheel publicados pela release.
 
 ### Corrigido
 - Day trade agora exige a mesma corretora (Lei 9.959/2000, art. 8º).
 - Saldo de IRRF não passa de um ano para o outro.
+
+[0.1.0]: https://github.com/StaffeToxic/b3-ir/releases/tag/v0.1.0
