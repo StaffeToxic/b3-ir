@@ -53,7 +53,9 @@ parse_b3_statement(path) -> StatementParseResult(operations, events, income, war
 deduplicate(ops) -> tuple[list[Operation], list[str]]
 classify(ops) -> list[Operation]                 # fills asset_class and trade_type
 build_positions(ops, events, until: date | None = None) -> PositionLedger
-assess_months(ops, ledger, year) -> list[MonthlyAssessment]
+build_positions(...).realized -> list[RealizedResult]   # swing sales + day-trade days
+assess_year(realized, year, opening: CarryState | None = None)
+    -> tuple[list[MonthlyAssessment], CarryState]   # CarryState chains years
 build_annual_report(ops, events, income, year) -> AnnualReport
 ```
 
