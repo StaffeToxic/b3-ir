@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "b3-ir: Brazilian income tax calculation for B3 stocks, FIIs and ETFs"
+type: software
+authors:
+  - family-names: "Fernandes Oliveira"
+    given-names: "Anthony Emanuel"
+    email: "staffetoxic@gmail.com"
+    affiliation: "Universidade Federal do Paraná (UFPR)"
+repository-code: "https://github.com/StaffeToxic/b3-ir"
+license: MIT
+keywords:
+  - income tax
+  - B3
+  - Brazil
+  - stocks
+  - real estate investment funds
