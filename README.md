@@ -80,7 +80,7 @@ Saída (trecho):
   Prejuízo a compensar: comum: R$ 4.020,00
   IRRF deduzido                 R$ 6,19
   DARF 6015: R$ 91,81 (período 2026-05, vence 30/06/2026)
-  ! UNVERIFIED: regras não confirmadas: day_trade_rate, ...
+  ! vencimento do DARF não considera feriados nacionais
 ```
 
 Código de saída `3` indica resultado incompleto: arquivo não suportado ou regra
