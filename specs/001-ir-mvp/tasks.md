@@ -48,6 +48,7 @@ by two tickets at once; risk `high` = tax correctness.
 | T021 | `parsers/b3_statements.py` against fixtures | T002, T005 | src/b3_ir/parsers/b3_statements.py | medium |
 | T022 | `parsers/dedup.py` | T020, T021 | src/b3_ir/parsers/dedup.py | medium |
 | T023 | `report/` text, JSON, CSV per `contracts/cli.md` | T013, T014 | src/b3_ir/report/ | low |
+| T025 | `parsers/csv_ops.py` manual CSV (FR-015) | T002 | src/b3_ir/parsers/csv_ops.py | low |
 | T024 | `cli.py` commands, exit codes, disclaimer | T022, T023 | src/b3_ir/cli.py | low |
 
 ## Wave 4 — Release readiness
@@ -72,5 +73,5 @@ before integration.
 
 FR-001 T020 · FR-002 T011 · FR-003 T021 · FR-004 T022 · FR-005 T010 · FR-006 T010 ·
 FR-007 T012 · FR-008 T013 · FR-009 T013 · FR-010 T014 · FR-011 T023/T024 ·
-FR-012 T003 · FR-013 T004 · FR-014 T024/T031 · SC-001 T030 · SC-002 T003 ·
+FR-012 T003 · FR-013 T004 · FR-014 T024/T031 · FR-015 T025 · SC-001 T030 · SC-002 T003 ·
 SC-003 T031/T032 · SC-004 T030 · SC-005 T030 · SC-006 T005

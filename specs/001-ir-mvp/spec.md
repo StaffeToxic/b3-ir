@@ -168,6 +168,9 @@ operations, events and income match the expected list.
 - **FR-013**: System MUST NOT make any network request and MUST NOT persist user
   data outside the output paths the user chooses (Constitution IV).
 - **FR-014**: README and CLI MUST show the not-tax-advice disclaimer (Constitution VI).
+- **FR-015**: System MUST accept a simple CSV of operations and corporate events
+  (`data;tipo;ticker;quantidade;preco;custos;irrf`) so users can enter or fix data
+  by hand and the CLI works before the PDF/XLSX parsers exist. Added 2026-11-11.
 
 ### Key Entities
 

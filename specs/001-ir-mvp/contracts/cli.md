@@ -12,9 +12,29 @@ b3-ir posicoes ENTRADAS... [--data AAAA-MM-DD] [--formato texto|json]
 b3-ir --version
 ```
 
-`ENTRADAS` are files or folders (recursive). `.pdf` → SINACOR parser;
-`.xlsx` → B3 statement parser (type detected from header row). Other extensions
-are listed as ignored.
+`ENTRADAS` are files or folders (recursive). `.csv` → manual operations CSV
+(FR-015); `.pdf` → SINACOR parser; `.xlsx` → B3 statement parser (type detected
+from header row). Other extensions are listed as ignored. Until a parser exists,
+its files are listed as unsupported and the exit code is 3.
+
+## Manual CSV (FR-015)
+
+```text
+data;tipo;ticker;quantidade;preco;custos;irrf
+2026-01-05;compra;ITSA4;100;10,00;5,00;0
+2026-02-02;venda;ITSA4;50;13,00;2,00;0,03
+2026-03-01;desdobramento;ITSA4;100;;;
+2026-04-01;bonificacao;ITSA4;10;5,00;;
+```
+
+- Separator `;` (or `,` when the file has no `;`); header row required.
+- `data`: `AAAA-MM-DD` or `DD/MM/AAAA`. Numbers accept `1.234,56` (a comma makes it Brazilian format) or `1234.56`;
+  without a comma the dot is the decimal separator, so write `1000`, not `1.000`.
+- `tipo`: `compra`, `venda`, `desdobramento`, `grupamento`, `bonificacao`.
+  For `grupamento`, `quantidade` is the number of shares removed (positive).
+  For `bonificacao`, `preco` is the cost attributed per bonus share.
+- `custos` and `irrf` are optional (default 0). Settlement date = trade date + 2
+  calendar days (only informative in the MVP).
 
 ## Exit codes
 

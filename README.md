@@ -20,11 +20,12 @@ de vendas de ações e dados para a declaração anual (DIRPF).
 
 | Recurso | Status |
 |---|---|
+| Entrada manual em CSV | ✅ pronto |
+| Preço médio com custos, desdobramento, grupamento e bonificação | ✅ pronto |
+| Separação de day trade e operações comuns | ✅ pronto |
+| Apuração mensal: ações, FIIs, ETFs, isenção, prejuízo, IRRF, DARF mínimo | ✅ pronto (regras `UNVERIFIED`) |
 | Leitura de notas de corretagem em PDF (padrão SINACOR) | planejado |
 | Importação dos extratos da Área do Investidor da B3 | planejado |
-| Preço médio com custos, desdobramento, grupamento e bonificação | em andamento |
-| Apuração mensal: operações comuns, day trade, FIIs, ETFs | em andamento |
-| Compensação de prejuízo, IRRF e DARF | em andamento |
 | Dados para a declaração anual (bens e direitos, renda variável) | planejado |
 
 **Fora do escopo do MVP:** opções, futuros, BDRs, renda fixa, criptoativos,
@@ -50,16 +51,52 @@ source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 ```
 
-## Uso (planejado)
+## Uso
 
-```bash
-b3-ir mensal ./notas --ano 2026
-b3-ir posicoes ./notas --data 2026-12-31
-b3-ir anual ./notas ./extratos-b3 --ano 2026 --formato csv --saida ./declaracao
+Por enquanto a entrada é um CSV simples (a leitura de notas em PDF e dos extratos
+da B3 vem a seguir). Veja [`examples/operacoes.csv`](examples/operacoes.csv):
+
+```text
+data;tipo;ticker;quantidade;preco;custos;irrf
+2026-01-05;compra;ITSA4;1000;10,00;5,00;0
+2026-02-10;venda;ITSA4;400;12,00;2,00;0,24
+2026-04-01;bonificacao;ITSA4;60;5,00;;
 ```
 
-O contrato completo da CLI está em
+```bash
+b3-ir mensal examples/operacoes.csv
+b3-ir posicoes examples/operacoes.csv --data 2026-04-30
+b3-ir mensal examples/operacoes.csv --formato json
+```
+
+Saída (trecho):
+
+```text
+== 2026-05 ==
+  Ações (day trade)           R$ 490,00
+  Prejuízo a compensar: comum: R$ 4.020,00
+  IRRF deduzido                 R$ 6,19
+  DARF 6015: R$ 91,81 (período 2026-05, vence 30/06/2026)
+  ! UNVERIFIED: regras não confirmadas: day_trade_rate, ...
+```
+
+Código de saída `3` indica resultado incompleto: arquivo não suportado ou regra
+ainda `UNVERIFIED`. O contrato completo está em
 [`specs/001-ir-mvp/contracts/cli.md`](specs/001-ir-mvp/contracts/cli.md).
+
+## Arquitetura
+
+```text
+src/b3_ir/
+├── domain/      núcleo puro, sem I/O: modelos, classificação, preço médio, apuração
+├── parsers/     entradas (CSV manual; PDF SINACOR e XLSX da B3 a seguir)
+├── report/      saídas em texto e JSON
+├── rules.py     registro único de regras fiscais com fonte legal
+└── cli.py       comando b3-ir
+```
+
+Testes de arquitetura garantem que o domínio não faz I/O, não acessa a rede e não
+usa `float`.
 
 ## Desenvolvimento
 
