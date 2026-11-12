@@ -50,10 +50,13 @@ def get(rule_id: str, on: date) -> Rule   # raises UnsupportedOperationError if 
 ## Functions
 
 ```python
-parse_sinacor(path) -> NoteParseResult(operations, warnings)
-parse_b3_statement(path) -> StatementParseResult(operations, events, income, warnings)
-deduplicate(ops) -> tuple[list[Operation], list[str]]
-classify(ops) -> list[Operation]                 # fills asset_class and trade_type
+parse_operations_csv(path) -> CsvParseResult(operations, events)
+parse_sinacor(path, broker=None, password=None) -> NoteParseResult(operations, unsupported)
+parse_b3_statement(path) -> StatementParseResult(operations, events, income, unsupported, warnings)
+deduplicate(primary_ops, statement_ops) -> tuple[list[Operation], list[str]]
+classify(ops, overrides: Mapping[str, AssetClass] | None = None)
+    -> tuple[list[Operation], list[str]]          # fills asset_class and trade_type
+load_catalog() -> Catalog(asset_classes, names)    # .ticker_for_name(name)
 build_positions(ops, events, until: date | None = None) -> PositionLedger
 build_positions(...).realized -> list[RealizedResult]   # swing sales + day-trade days
 assess_year(realized, year, opening: CarryState | None = None)
