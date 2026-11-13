@@ -12,7 +12,9 @@ preço médio, apuração mensal, DARF, day trade, isenção de vendas de açõe
 dados da declaração anual (DIRPF). Interface no navegador, linha de comando e
 biblioteca Python — com cada regra ligada ao texto da lei.
 
-![Resultado no b3-ir: DARF do ano, isentos, prejuízo a compensar e pendências](docs/img/interface-resultado.png)
+![b3-ir em uso: aceite do termo, dados de exemplo, resumo, apuração mensal e declaração anual](docs/img/demo.gif)
+
+> 🇺🇸 **English summary below** — [jump to it](#english).
 
 ## Baixar
 
@@ -94,6 +96,8 @@ configuração, para que uma aba aberta continue valendo depois de reiniciar), n
 carrega nada da internet e apaga os arquivos ao fim de cada análise.
 
 ![Tela inicial com o aceite do termo](docs/img/interface-inicio.png)
+
+![Resumo do ano: DARF, isentos, prejuízo a compensar e pendências](docs/img/interface-resultado.png)
 
 ![Apuração mensal com a guia de DARF](docs/img/interface-mensal.png)
 
@@ -190,6 +194,39 @@ mypy
 
 Veja [CONTRIBUTING.md](CONTRIBUTING.md). **Nunca anexe notas de corretagem ou
 dados pessoais em issues.**
+
+## English
+
+**b3-ir computes Brazilian income tax on B3 stock, REIT (FII) and ETF trades, on
+your own computer.** It reads SINACOR brokerage notes (PDF) and B3 investor-area
+statements (XLSX), keeps the weighted average cost through splits and bonus
+shares, pairs day trades per broker, and produces the monthly tax slips (DARF) and
+the annual return (DIRPF) data.
+
+What makes it different:
+
+- **Every tax rule is traced to the law.** Rates, limits and deadlines live in one
+  registry (`src/b3_ir/rules.py`), each with its legal citation and validity dates;
+  the official texts are versioned as Markdown in [`legislacao/`](legislacao/), with
+  the SHA-256 of the downloaded source. A test fails if a cited law is missing.
+- **Exact money.** `Decimal` everywhere; architecture tests forbid `float`, I/O and
+  network access in the domain core.
+- **Refuses instead of guessing.** Unknown tickers, short sales and out-of-scope
+  instruments are reported, never silently computed.
+- **Local-first and private.** The optional web UI binds to `127.0.0.1` only, uses a
+  per-user token, loads nothing from the internet and deletes uploads after each run.
+- **Supply-chain hygiene.** CI on Linux, Windows and macOS (Python 3.11–3.13),
+  CodeQL, OpenSSF Scorecard, Dependabot, SHA-pinned actions and build-provenance
+  attestations for release binaries.
+- **Spec-driven.** Specs, plans, contracts and research decisions are in
+  [`specs/`](specs/).
+
+Quick start: download `b3-ir-windows-x64.exe` from the
+[latest release](https://github.com/StaffeToxic/b3-ir/releases/latest), or
+`pip install` the wheel and run `b3-ir web`. The UI and docs are in Portuguese,
+since the tax rules are Brazilian.
+
+**Not tax advice** — see the [disclaimer](DISCLAIMER.md) (Portuguese).
 
 ## Licença
 
