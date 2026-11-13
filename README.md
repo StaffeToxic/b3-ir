@@ -34,26 +34,6 @@ SHA-256 publicado na página da versão. Veja [SECURITY.md](SECURITY.md).
 > conferir os valores e pela sua declaração. Leia o
 > [Termo de Isenção de Responsabilidade](DISCLAIMER.md) antes de usar.
 
-## O que ele faz
-
-| Recurso | Status |
-|---|---|
-| Interface no navegador (`b3-ir web`), 100% local | ✅ pronto |
-| Entrada manual em CSV | ✅ pronto |
-| Preço médio com custos, desdobramento, grupamento e bonificação | ✅ pronto |
-| Separação de day trade e operações comuns | ✅ pronto |
-| Apuração mensal: ações, FIIs, ETFs, isenção, prejuízo, IRRF, DARF mínimo | ✅ pronto |
-| Regras conferidas nos textos oficiais, versionados em [`legislacao/`](legislacao/) | ✅ 9 de 10 |
-| Leitura de notas de corretagem em PDF (padrão SINACOR, via [correpy](https://github.com/thiagosalvatore/correpy)) | ✅ pronto (extra opcional) |
-| Nome de pregão → ticker e classe (FII/ETF/ação) a partir do COTAHIST da B3 | ✅ pronto |
-| Extratos da Área do Investidor da B3 (Negociação e Movimentação, XLSX) | ✅ pronto (formato a validar com export real) |
-| Deduplicação entre notas e extrato | ✅ pronto |
-| Relatório anual (DIRPF): bens e direitos, renda variável, isentos, JCP — texto, JSON e CSV | ✅ pronto |
-
-**Fora do escopo do MVP:** opções, futuros, BDRs, renda fixa, criptoativos,
-ativos no exterior, aluguel de ações e venda a descoberto. Esses itens são
-**recusados explicitamente**, nunca calculados em silêncio.
-
 ## Princípios
 
 - **Toda regra fiscal tem fonte legal citada** em [`docs/regras-fiscais.md`](docs/regras-fiscais.md),
@@ -62,6 +42,9 @@ ativos no exterior, aluguel de ações e venda a descoberto. Esses itens são
   Regra não confirmada aparece como `UNVERIFIED` no relatório.
 - **Valores exatos**: dinheiro em `Decimal`, nunca ponto flutuante.
 - **Privacidade**: tudo roda localmente, sem acesso à internet e sem telemetria.
+- **Escopo honesto**: opções, futuros, BDRs, renda fixa, criptoativos, ativos no
+  exterior, aluguel de ações e venda a descoberto ficam de fora e são **recusados
+  explicitamente**, nunca calculados em silêncio.
 
 ## Instalação para desenvolvimento
 
