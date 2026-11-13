@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/StaffeToxic/b3-ir/actions/workflows/ci.yml/badge.svg)](https://github.com/StaffeToxic/b3-ir/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/StaffeToxic/b3-ir)](https://github.com/StaffeToxic/b3-ir/releases/latest)
+[![CodeQL](https://github.com/StaffeToxic/b3-ir/actions/workflows/codeql.yml/badge.svg)](https://github.com/StaffeToxic/b3-ir/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/StaffeToxic/b3-ir/badge)](https://scorecard.dev/viewer/?uri=github.com/StaffeToxic/b3-ir)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 
@@ -17,11 +19,13 @@ biblioteca Python — com cada regra ligada ao texto da lei.
 | Para | Como |
 |---|---|
 | **Windows, sem instalar nada** | Baixe o `b3-ir-windows-x64.exe` na [última versão](https://github.com/StaffeToxic/b3-ir/releases/latest) e dê dois cliques: o navegador abre com a interface. |
-| **Quem tem Python 3.11+** | `pip install "b3-ir[pdf] @ https://github.com/StaffeToxic/b3-ir/releases/download/v0.1.0/b3_ir-0.1.0-py3-none-any.whl"` e depois `b3-ir web` |
+| **Quem tem Python 3.11+** | `pip install "b3-ir[pdf] @ https://github.com/StaffeToxic/b3-ir/releases/download/v0.1.1/b3_ir-0.1.1-py3-none-any.whl"` e depois `b3-ir web` |
 
 O executável não é assinado digitalmente, então o Windows pode mostrar "O Windows
 protegeu o computador": clique em **Mais informações → Executar assim mesmo**.
-Para conferir o arquivo, compare o SHA-256 publicado na página da versão.
+Para conferir que o arquivo saiu deste repositório, use o atestado de origem
+(`gh attestation verify b3-ir-windows-x64.exe --repo StaffeToxic/b3-ir`) ou compare o
+SHA-256 publicado na página da versão. Veja [SECURITY.md](SECURITY.md).
 
 > [!WARNING]
 > **Versão 0.1.** O b3-ir **não é consultoria tributária**. Você é o único responsável por

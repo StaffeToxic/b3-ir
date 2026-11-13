@@ -3,6 +3,15 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/);
 versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
+## [0.1.1] - 2026-11-12
+
+### Segurança
+- Executáveis e pacotes da release com atestado de origem (`gh attestation verify`).
+- Análise de segurança com CodeQL, OpenSSF Scorecard e Dependabot; Actions fixadas por
+  SHA e com permissões mínimas.
+- `SECURITY.md` com relato privado de vulnerabilidades.
+- Release pronta para publicar no PyPI (Trusted Publishing), a ser ativada.
+
 ## [0.1.0] - 2026-11-12
 
 Primeira versão pública.
@@ -38,4 +47,5 @@ Primeira versão pública.
 - Day trade agora exige a mesma corretora (Lei 9.959/2000, art. 8º).
 - Saldo de IRRF não passa de um ano para o outro.
 
+[0.1.1]: https://github.com/StaffeToxic/b3-ir/releases/tag/v0.1.1
 [0.1.0]: https://github.com/StaffeToxic/b3-ir/releases/tag/v0.1.0
